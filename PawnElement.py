@@ -15,7 +15,7 @@ class PawnElement:
         self.row = random.randint(1,9)
         self.colom = random.randint(1,9)
 
-    def isInTheSamePlace(self, element: PawnElement):
+    def isInTheSamePlace(self, element):
         return element.row == self.row and element.colom == self.colom
 
     def isTheSameCoordinate(self, row, colom):

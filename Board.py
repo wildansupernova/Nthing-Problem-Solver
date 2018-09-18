@@ -66,8 +66,6 @@ class Board:
         return highestScoreState
 
     def compareListOfPawnWithColor(self, listOfPawnA: List[PawnElement], listOfPawnB: List[PawnElement]):
-        nA= len(listOfPawnA)
-        nB = len(listOfPawnB)
         scoreA = self.scoringListOfPawnWithColor(listOfPawnA)
         scoreB = self.scoringListOfPawnWithColor(listOfPawnB)
         if scoreA > scoreB:
@@ -94,6 +92,7 @@ class Board:
             elif listOfPawn[i].pawnElement == PawnType.QUEEN:
                 tempScoreIntersectionDifferentColor1, tempScoreIntersectionSameColor1 = self.scoringRookWithColor(listOfPawn, i)
                 tempScoreIntersectionDifferentColor2, tempScoreIntersectionSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
+                
                 tempScoreIntersectionDifferentColor = tempScoreIntersectionDifferentColor1 + tempScoreIntersectionDifferentColor2
                 tempScoreIntersectionSameColor = tempScoreIntersectionSameColor1 + tempScoreIntersectionSameColor2
             scoreIntersectionDifferentColor += tempScoreIntersectionDifferentColor
