@@ -3,7 +3,7 @@ from PawnType import PawnType
 from typing import List
 import copy
 """
-    Start index from 1-8
+    Start index from 1-9
 """
 
 class Board:
