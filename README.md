@@ -1,2 +1,2 @@
-# Nthing-Problem-Solver
+# N-ything-Problem-Solver
 AI Bre
