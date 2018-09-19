@@ -111,7 +111,7 @@ class Board:
             rowMove = listOfPawn[idx].row + rowTransition[i]
             colomMove = listOfPawn[idx].colom + colomTransition[i]
 
-            if self.isValidCoordinate(rowMove, colomMove) :
+            if self.isValidCoordinate(rowMove, colomMove):
                 searchResult = self.findElementWithCoordinate(rowMove, colomMove, listOfPawn)
                 if searchResult != self.NOT_FOUND:
                     if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
@@ -141,7 +141,8 @@ class Board:
                         if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
                             scoreIntersectionSameColor += 1
                         else:
-                            scoreIntersectionDifferentColor += 1                        
+                            scoreIntersectionDifferentColor += 1
+                        break                     
                 else:
                     break
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
@@ -165,7 +166,8 @@ class Board:
                         if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
                             scoreIntersectionSameColor += 1
                         else:
-                            scoreIntersectionDifferentColor += 1                        
+                            scoreIntersectionDifferentColor += 1   
+                        break                     
                 else:
                     break
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
@@ -200,6 +202,32 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
+    def calculatePawnThatAttackSameColor(self, listOfPawn: List[PawnElement]) -> (int, int):
+        n = len(listOfPawn)
+        scoreIntersectionDifferentColor = 0
+        scoreIntersectionSameColor = 0
+        for i in range(0, n):
+            tempScoreIntersectionDifferentColor = 0
+            tempScoreIntersectionSameColor = 0
+            if listOfPawn[i].pawnElement == PawnType.KNIGHT :
+                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringKnightWithColor(listOfPawn, i)
+            elif listOfPawn[i].pawnElement == PawnType.BISHOP:
+                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringBishopWithColor(listOfPawn, i)
+            elif listOfPawn[i].pawnElement == PawnType.ROOK:
+                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringRookWithColor(listOfPawn, i)
+            elif listOfPawn[i].pawnElement == PawnType.QUEEN:
+                tempScoreIntersectionDifferentColor1, tempScoreIntersectionSameColor1 = self.scoringRookWithColor(listOfPawn, i)
+                tempScoreIntersectionDifferentColor2, tempScoreIntersectionSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
+                
+                tempScoreIntersectionDifferentColor = tempScoreIntersectionDifferentColor1 + tempScoreIntersectionDifferentColor2
+                tempScoreIntersectionSameColor = tempScoreIntersectionSameColor1 + tempScoreIntersectionSameColor2
+            if tempScoreIntersectionDifferentColor != 0 :
+                scoreIntersectionDifferentColor += 1
+            if tempScoreIntersectionSameColor != 0 :
+                # print(tempScoreIntersectionSameColor)
+                # print(listOfPawn[i].__dict__)
+                scoreIntersectionSameColor += 1
+        return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
     def findElementWithCoordinate(self, row, colom, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)

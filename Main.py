@@ -23,4 +23,8 @@ board = Board(listOfPawn)
 
 board.initRandomState(board.listOfPawn)
 board.printBoard(board.listOfPawn)
+hillClimbingResult = board.hillClimbing(board.listOfPawn)
+board.printBoard(hillClimbingResult)
+differentColor, sameColor = board.calculatePawnThatAttackSameColor(hillClimbingResult)
+print(str(differentColor) + " " + str(sameColor))
 
