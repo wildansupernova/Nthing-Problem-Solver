@@ -202,7 +202,7 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
-    def calculatePawnThatAttackSameColor(self, listOfPawn: List[PawnElement]) -> (int, int):
+    def calculatePawnThatAttackSameOrDifferentColor(self, listOfPawn: List[PawnElement]) -> (int, int):
         n = len(listOfPawn)
         scoreIntersectionDifferentColor = 0
         scoreIntersectionSameColor = 0
