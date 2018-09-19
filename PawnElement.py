@@ -12,8 +12,8 @@ class PawnElement:
         return self.row == -1 and self.colom == -1
 
     def randomizeRowColom(self):
-        self.row = random.randint(1,9)
-        self.colom = random.randint(1,9)
+        self.row = random.randint(1,8)
+        self.colom = random.randint(1,8)
 
     def isInTheSamePlace(self, element):
         return element.row == self.row and element.colom == self.colom

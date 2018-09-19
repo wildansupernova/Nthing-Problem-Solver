@@ -13,8 +13,14 @@ def makingInput(listOfPawn: List[PawnElement]):
             listOfPawn.append(newElementPawn)
             numberOfThisPawn -= 1
         n -= 1
-    
+
+def printList(listOfPawn: List[PawnElement]):
+    for element in listOfPawn:
+        print(element.__dict__)
 listOfPawn = []
 makingInput(listOfPawn)
+board = Board(listOfPawn)
 
+board.initRandomState(board.listOfPawn)
+board.printBoard(board.listOfPawn)
 

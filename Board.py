@@ -1,9 +1,9 @@
 from PawnElement import PawnElement
-from PawnType import PawnType
 from typing import List
+from PawnType import PawnType
 import copy
 """
-    Start index from 1-9
+    Start index from 1-8
 """
 
 class Board:
@@ -52,8 +52,8 @@ class Board:
         n = len(listOfPawn)
         highestScoreState = None
         for i in range(0, n):
-            for j in range(1,10):
-                for k in range(1,10):
+            for j in range(1,9):
+                for k in range(1,9):
                     if self.isEmptyCell(j,k,listOfPawn):
                         tempState = copy.deepcopy(listOfPawn)
                         tempState[i].row = j
@@ -170,11 +170,40 @@ class Board:
                     break
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
+    def printBoard(self, listOfPawn: List[PawnElement]):
+        resultString = ""
+        for i in range(1, 9):
+            for j in range(1, 10):
+                result = self.findElementWithCoordinate(i, j, listOfPawn)
+                if result == self.NOT_FOUND:
+                    resultString += "."
+                elif listOfPawn[result].pawnElement == PawnType.KNIGHT:
+                    resultChar = "K"
+                    if listOfPawn[result].pawnColor == PawnType.BLACK :
+                        resultChar = "k"
+                    resultString += resultChar
+                elif listOfPawn[result].pawnElement == PawnType.BISHOP:
+                    resultChar = "B"
+                    if listOfPawn[result].pawnColor == PawnType.BLACK :
+                        resultChar = "b"
+                    resultString += resultChar
+                elif listOfPawn[result].pawnElement == PawnType.ROOK:
+                    resultChar = "R"
+                    if listOfPawn[result].pawnColor == PawnType.BLACK :
+                        resultChar = "r"   
+                    resultString += resultChar 
+                elif listOfPawn[result].pawnElement == PawnType.QUEEN:
+                    resultChar = "Q"
+                    if listOfPawn[result].pawnColor == PawnType.BLACK :
+                        resultChar = "q"      
+                    resultString += resultChar
+            resultString += "\n"              
+        print(resultString)
+
+
     def findElementWithCoordinate(self, row, colom, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         for i in range(0, n):
             if listOfPawn[i].isTheSameCoordinate(row, colom):
                 return i
         return self.NOT_FOUND
-
-

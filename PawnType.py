@@ -4,5 +4,7 @@ class PawnType:
     ROOK = "ROOK"
     KNIGHT = "KNIGHT"
     EMPTY = "EMPTY"
+    WHITE = "WHITE"
+    BLACK = "BLACK"
 
 
