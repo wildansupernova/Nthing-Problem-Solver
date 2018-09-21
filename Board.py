@@ -1,6 +1,8 @@
 from PawnElement import PawnElement
 from typing import List
 from PawnType import PawnType
+import random
+import numpy as np
 import copy
 """
     Start index from 1-8
@@ -12,7 +14,8 @@ class Board:
 
     def __init__(self, listOfPawn):
         self.listOfPawn = listOfPawn
-        
+
+    # Check if element on Idx is unique (the coordinate) in list or not
     def isIdxthElementUniqueInList(self, idx, listOfPawn):
         found = False
         for i in range(0,len(listOfPawn)):
@@ -21,6 +24,7 @@ class Board:
                     found = True
         return not(found)
 
+    # Randomize the location of pawns, every pawn in unique coordinate
     def initRandomState(self, listOfPawn):
         n = len(listOfPawn)
 
@@ -29,6 +33,7 @@ class Board:
             while not(self.isIdxthElementUniqueInList(i, listOfPawn)):
                 listOfPawn[i].randomizeRowColom()
 
+    # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
         newStateListPawn = copy.deepcopy(listOfPawn)
         neighbor = self.chooseNextStatesFromListWithHighestScore(listOfPawn, self.compareListOfPawnWithColor)
@@ -37,6 +42,7 @@ class Board:
             neighbor = self.chooseNextStatesFromListWithHighestScore(newStateListPawn, self.compareListOfPawnWithColor)
         return newStateListPawn
 
+    # Check if this cell (row, column) is empty
     def isEmptyCell(self, row, colom, listOfPawn):
         found = False
         for element in listOfPawn:
@@ -45,9 +51,11 @@ class Board:
                 break
         return not(found)
 
+    # Check if coordinate is in 8x8 board
     def isValidCoordinate(self, row, colom):
         return row >= 1 and row <= 8 and colom >= 1 and colom <=8 
 
+    # Choose from list of enumerated states that has highest score
     def chooseNextStatesFromListWithHighestScore(self, listOfPawn: List[PawnElement], compareFunction):
         n = len(listOfPawn)
         highestScoreState = None
@@ -65,6 +73,62 @@ class Board:
                             highestScoreState = tempState
         return highestScoreState
 
+    # Choose next state from list randomly
+    def chooseNextStatesFromListRandomly(self, listOfPawn: List[PawnElement], compareFunction):
+        n = len(listOfPawn)
+        chosenState = None
+        while True:
+            i = random.randint(0,n-1)
+            j = random.randint(1,8)
+            k = random.randint(1,8)
+            if self.isEmptyCell(j,k,listOfPawn) and self.isValidCoordinate(j,k):
+                tempState = copy.deepcopy(listOfPawn)
+                tempState[i].row = j
+                tempState[i].colom = k
+                chosenState = tempState
+                break
+        return chosenState
+
+    # Simulated Annealing
+    def simulatedAnnealing(self, T, descentRate, delay, scheduleFunction, topLimit, listOfPawn: List[PawnElement]) -> List[PawnElement]:
+        newStateListPawn = copy.deepcopy(listOfPawn)
+        neighbor = self.chooseNextStatesFromListRandomly(listOfPawn, self.compareListOfPawnWithColor)
+        for t in range(0,topLimit):
+            T = self.scheduleFunction(t, T, descentRate, delay)
+            if (T <= 0):
+                break
+            elif self.compareListOfPawnWithColor(neighbor, newStateListPawn) > 0:
+                newStateListPawn = neighbor
+                neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
+            else:
+                # List contain now and neighbor
+                nowAndNeighbor = []
+                nowAndNeighbor.append(1)
+                nowAndNeighbor.append(2)
+                # Probability list
+                takeNeighbor = self.calculateProbability(T,newStateListPawn,neighbor)
+                probability = [1-takeNeighbor, takeNeighbor]
+                # Take fron nowAndNeighbor one element using probability
+                if (np.random.choice(nowAndNeighbor,1,probability) == 2):
+                    newStateListPawn = neighbor
+                neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
+
+        return newStateListPawn
+
+    # Decrease T gradually by t (time), descentRate and delay
+    def scheduleFunction(self, t, T, descentRate, delay):
+        if (t != 0) and (t%delay == 0):
+            return T - (T * descentRate)
+        else:
+            return T
+        
+    # Calculate probability, Ti is T that has been decreased
+    def calculateProbability(self, Ti, listNow: List[PawnElement], listNeighbor: List[PawnElement]):
+        scoreNow = self.scoringListOfPawnWithColor(listNow)
+        scoreNeighbor = self.scoringListOfPawnWithColor(listNeighbor)
+        return np.exp((scoreNeighbor-scoreNow)/Ti)
+
+    # Return 1 if A > B, 0 if A == B and -1 if A < B
     def compareListOfPawnWithColor(self, listOfPawnA: List[PawnElement], listOfPawnB: List[PawnElement]):
         scoreA = self.scoringListOfPawnWithColor(listOfPawnA)
         scoreB = self.scoringListOfPawnWithColor(listOfPawnB)
@@ -76,6 +140,7 @@ class Board:
             result = -1
         return result
 
+    # Making list of scores from all pawns
     def scoringListOfPawnWithColor(self, listOfPawn: List[PawnElement]) -> int:
         n = len(listOfPawn)
         scoreIntersectionDifferentColor = 0
@@ -100,6 +165,7 @@ class Board:
 
         return abs(scoreIntersectionDifferentColor - scoreIntersectionSameColor)
 
+    # Making neighbours' score for knights
     def scoringKnightWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         scoreIntersectionDifferentColor = 0
         scoreIntersectionSameColor = 0
@@ -122,6 +188,7 @@ class Board:
 
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
+    # Making neighbours' scores for bishop break if found
     def scoringBishopWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, -1, 1, 1]
         colomTransition = [-1, 1, -1, 1]
@@ -147,6 +214,7 @@ class Board:
                     break
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
+    # Making neighbours' scores for Rook, break if found
     def scoringRookWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, 0, 0, 1]
         colomTransition = [0, -1, 1, 0]
@@ -172,6 +240,7 @@ class Board:
                     break
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
+    # Print the board
     def printBoard(self, listOfPawn: List[PawnElement]):
         resultString = ""
         for i in range(1, 9):
@@ -202,6 +271,7 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
+    # Calculate the number of PAWN not the ATTACK
     def calculatePawnThatAttackSameOrDifferentColor(self, listOfPawn: List[PawnElement]) -> (int, int):
         n = len(listOfPawn)
         scoreIntersectionDifferentColor = 0
@@ -229,6 +299,7 @@ class Board:
                 scoreIntersectionSameColor += 1
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
+    # Find an element on listOfPawn that located in (row,colom)
     def findElementWithCoordinate(self, row, colom, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         for i in range(0, n):

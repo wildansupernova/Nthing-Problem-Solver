@@ -28,3 +28,15 @@ board.printBoard(hillClimbingResult)
 differentColor, sameColor = board.calculatePawnThatAttackSameOrDifferentColor(hillClimbingResult)
 print(str(sameColor) + " " + str(differentColor))
 
+print("SIMULATED ANNEALING")
+# Setting for Simulated Annealing
+T = 100
+descentRate = 0.05
+delay = 10
+scheduleFunction = board.scheduleFunction
+topLimit = 100000
+simulatedAnnealingResult = board.simulatedAnnealing(T, descentRate, delay, scheduleFunction, topLimit,board.listOfPawn)
+board.printBoard(simulatedAnnealingResult)
+differentColor, sameColor = board.calculatePawnThatAttackSameOrDifferentColor(simulatedAnnealingResult)
+print(str(sameColor) + " " + str(differentColor))
+
