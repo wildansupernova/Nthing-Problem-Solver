@@ -44,6 +44,7 @@ class Board:
             neighbor = self.chooseNextStatesFromListWithHighestScore(newStateListPawn, self.compareListOfPawnWithColor)
         return newStateListPawn
 
+    # Simulated Annealing Algorithm
     def simulatedAnnealing(self, listOfPawn: List[PawnElement], t, desRate, desStep) -> List[PawnElement]:
         stateListPawn = copy.deepcopy(listOfPawn)
         totalNeighbor = self.countNeighbor(stateListPawn)
@@ -64,12 +65,14 @@ class Board:
             step += 1
             t = self.descentTemperature(t, desRate, desStep, step)
 
+    # Decrease temperature
     def descentTemperature(self, t, desRate, desStep, step):
         if step % desStep == 0:
             return t - desRate
         else:
             return t
 
+    # Count the Neighbor
     def countNeighbor(self, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         count = 0
@@ -81,6 +84,7 @@ class Board:
 
         return count
 
+    # Select random neighbor at idx
     def selectNeighbor(self, listOfPawn: List[PawnElement], idx):
         n = len(listOfPawn)
         count = 0
@@ -142,45 +146,6 @@ class Board:
                 chosenState = tempState
                 break
         return chosenState
-
-    # # Simulated Annealing
-    # def simulatedAnnealing(self, T, descentRate, delay, scheduleFunction, topLimit, listOfPawn: List[PawnElement]) -> List[PawnElement]:
-    #     newStateListPawn = copy.deepcopy(listOfPawn)
-    #     neighbor = self.chooseNextStatesFromListRandomly(listOfPawn, self.compareListOfPawnWithColor)
-    #     for t in range(0,topLimit):
-    #         T = self.scheduleFunction(t, T, descentRate, delay)
-    #         if (T <= 0):
-    #             break
-    #         elif self.compareListOfPawnWithColor(neighbor, newStateListPawn) > 0:
-    #             newStateListPawn = neighbor
-    #             neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
-    #         else:
-    #             # List contain now and neighbor
-    #             nowAndNeighbor = []
-    #             nowAndNeighbor.append(1)
-    #             nowAndNeighbor.append(2)
-    #             # Probability list
-    #             takeNeighbor = self.calculateProbability(T,newStateListPawn,neighbor)
-    #             probability = [1-takeNeighbor, takeNeighbor]
-    #             # Take fron nowAndNeighbor one element using probability
-    #             if (np.random.choice(nowAndNeighbor,1,probability) == 2):
-    #                 newStateListPawn = neighbor
-    #             neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
-
-    #     return newStateListPawn
-
-    # # Decrease T gradually by t (time), descentRate and delay
-    # def scheduleFunction(self, t, T, descentRate, delay):
-    #     if (t != 0) and (t%delay == 0):
-    #         return T - (T * descentRate)
-    #     else:
-    #         return T
-        
-    # # Calculate probability, Ti is T that has been decreased
-    # def calculateProbability(self, Ti, listNow: List[PawnElement], listNeighbor: List[PawnElement]):
-    #     scoreNow = self.scoringListOfPawnWithColor(listNow)
-    #     scoreNeighbor = self.scoringListOfPawnWithColor(listNeighbor)
-    #     return np.exp((scoreNeighbor-scoreNow)/Ti)
 
     # Return 1 if A > B, 0 if A == B and -1 if A < B
     def compareListOfPawnWithColor(self, listOfPawnA: List[PawnElement], listOfPawnB: List[PawnElement]):
