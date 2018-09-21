@@ -1,4 +1,5 @@
 from PawnElement import PawnElement
+from PopulationMember import PopulationMember
 from typing import List
 from PawnType import PawnType
 import random
@@ -34,6 +35,22 @@ class Board:
             listOfPawn[i].randomizeRowColumn()
             while not(self.isIdxthElementUniqueInList(i, listOfPawn)):
                 listOfPawn[i].randomizeRowColumn()
+
+    # Make population
+    def initPopulation(self, N, listOfPawn):
+        population = []
+        for i in range(0,N):
+            self.initRandomState(listOfPawn)
+            population.append(PopulationMember(listOfPawn))
+        return population
+    
+        # Survival functin
+    def survivalFunction(self, populationMember: PopulationMember, population: List[PopulationMember], fitnessFunction):
+        n = len(population)
+        totalFit = 0
+        for x in population:
+            totalFit += x.fitness
+        return populationMember.fitness/totalFit
 
     # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
@@ -101,7 +118,7 @@ class Board:
                             tempState[i].column = k
 
                             return tempState
-
+    # Check if row, column empty
     def isEmptyCell(self, row, column, listOfPawn):
         found = False
         for element in listOfPawn:
@@ -109,7 +126,8 @@ class Board:
                 found = True
                 break
         return not(found)
-
+    
+    # Check if coordinate in 8x8 chess
     def isValidCoordinate(self, row, column):
         return row >= 1 and row <= 8 and column >= 1 and column <= 8 
 
@@ -290,6 +308,7 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
+    # Calculate numbers of Pawn Attack
     def calculatePawnAttack(self, listOfPawn: List[PawnElement]) -> (int, int):
         n = len(listOfPawn)
         scoreIntersectingDifferentColor = 0
@@ -317,6 +336,7 @@ class Board:
                 scoreIntersectingSameColor += 1
         return scoreIntersectingDifferentColor, scoreIntersectingSameColor
 
+    # Find in listOfPawn in specific row and column
     def findElementWithCoordinate(self, row, column, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         for i in range(0, n):
