@@ -4,6 +4,8 @@ from PawnType import PawnType
 import random
 import numpy as np
 import copy
+import random
+import math
 """
     Start index from 1-8
 """
@@ -29,9 +31,9 @@ class Board:
         n = len(listOfPawn)
 
         for i in range(0, n):
-            listOfPawn[i].randomizeRowColom()
+            listOfPawn[i].randomizeRowColumn()
             while not(self.isIdxthElementUniqueInList(i, listOfPawn)):
-                listOfPawn[i].randomizeRowColom()
+                listOfPawn[i].randomizeRowColumn()
 
     # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
@@ -42,18 +44,70 @@ class Board:
             neighbor = self.chooseNextStatesFromListWithHighestScore(newStateListPawn, self.compareListOfPawnWithColor)
         return newStateListPawn
 
-    # Check if this cell (row, column) is empty
-    def isEmptyCell(self, row, colom, listOfPawn):
+    def simulatedAnnealing(self, listOfPawn: List[PawnElement], t, desRate, desStep) -> List[PawnElement]:
+        stateListPawn = copy.deepcopy(listOfPawn)
+        totalNeighbor = self.countNeighbor(stateListPawn)
+        step = 0
+        while True:
+            if t <= 0:
+                return stateListPawn
+            idx = random.randint(1, totalNeighbor)
+            newStateListPawn = self.selectNeighbor(stateListPawn, idx)
+            delta = self.scoringListOfPawnWithColor(newStateListPawn) - self.scoringListOfPawnWithColor(stateListPawn)
+            if delta > 0:
+                stateListPawn = newStateListPawn
+            else:
+                probability = math.pow(math.e, delta/t)
+                if probability > random.random():
+                    stateListPawn = newStateListPawn
+
+            step += 1
+            t = self.descentTemperature(t, desRate, desStep, step)
+
+    def descentTemperature(self, t, desRate, desStep, step):
+        if step % desStep == 0:
+            return t - desRate
+        else:
+            return t
+
+    def countNeighbor(self, listOfPawn: List[PawnElement]):
+        n = len(listOfPawn)
+        count = 0
+        for i in range(0, n):
+            for j in range(1,9):
+                for k in range(1,9):
+                    if self.isEmptyCell(j,k,listOfPawn):
+                        count += 1
+
+        return count
+
+    def selectNeighbor(self, listOfPawn: List[PawnElement], idx):
+        n = len(listOfPawn)
+        count = 0
+
+        for i in range(0, n):
+            for j in range(1,9):
+                for k in range(1,9):
+                    if self.isEmptyCell(j,k,listOfPawn):
+                        count += 1
+
+                        if count == idx:
+                            tempState = copy.deepcopy(listOfPawn)
+                            tempState[i].row = j
+                            tempState[i].column = k
+
+                            return tempState
+
+    def isEmptyCell(self, row, column, listOfPawn):
         found = False
         for element in listOfPawn:
-            if element.isTheSameCoordinate(row, colom):
+            if element.isTheSameCoordinate(row, column):
                 found = True
                 break
         return not(found)
 
-    # Check if coordinate is in 8x8 board
-    def isValidCoordinate(self, row, colom):
-        return row >= 1 and row <= 8 and colom >= 1 and colom <=8 
+    def isValidCoordinate(self, row, column):
+        return row >= 1 and row <= 8 and column >= 1 and column <= 8 
 
     # Choose from list of enumerated states that has highest score
     def chooseNextStatesFromListWithHighestScore(self, listOfPawn: List[PawnElement], compareFunction):
@@ -65,7 +119,7 @@ class Board:
                     if self.isEmptyCell(j,k,listOfPawn):
                         tempState = copy.deepcopy(listOfPawn)
                         tempState[i].row = j
-                        tempState[i].colom = k
+                        tempState[i].column = k
 
                         if highestScoreState == None:
                             highestScoreState = tempState
@@ -89,44 +143,44 @@ class Board:
                 break
         return chosenState
 
-    # Simulated Annealing
-    def simulatedAnnealing(self, T, descentRate, delay, scheduleFunction, topLimit, listOfPawn: List[PawnElement]) -> List[PawnElement]:
-        newStateListPawn = copy.deepcopy(listOfPawn)
-        neighbor = self.chooseNextStatesFromListRandomly(listOfPawn, self.compareListOfPawnWithColor)
-        for t in range(0,topLimit):
-            T = self.scheduleFunction(t, T, descentRate, delay)
-            if (T <= 0):
-                break
-            elif self.compareListOfPawnWithColor(neighbor, newStateListPawn) > 0:
-                newStateListPawn = neighbor
-                neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
-            else:
-                # List contain now and neighbor
-                nowAndNeighbor = []
-                nowAndNeighbor.append(1)
-                nowAndNeighbor.append(2)
-                # Probability list
-                takeNeighbor = self.calculateProbability(T,newStateListPawn,neighbor)
-                probability = [1-takeNeighbor, takeNeighbor]
-                # Take fron nowAndNeighbor one element using probability
-                if (np.random.choice(nowAndNeighbor,1,probability) == 2):
-                    newStateListPawn = neighbor
-                neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
+    # # Simulated Annealing
+    # def simulatedAnnealing(self, T, descentRate, delay, scheduleFunction, topLimit, listOfPawn: List[PawnElement]) -> List[PawnElement]:
+    #     newStateListPawn = copy.deepcopy(listOfPawn)
+    #     neighbor = self.chooseNextStatesFromListRandomly(listOfPawn, self.compareListOfPawnWithColor)
+    #     for t in range(0,topLimit):
+    #         T = self.scheduleFunction(t, T, descentRate, delay)
+    #         if (T <= 0):
+    #             break
+    #         elif self.compareListOfPawnWithColor(neighbor, newStateListPawn) > 0:
+    #             newStateListPawn = neighbor
+    #             neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
+    #         else:
+    #             # List contain now and neighbor
+    #             nowAndNeighbor = []
+    #             nowAndNeighbor.append(1)
+    #             nowAndNeighbor.append(2)
+    #             # Probability list
+    #             takeNeighbor = self.calculateProbability(T,newStateListPawn,neighbor)
+    #             probability = [1-takeNeighbor, takeNeighbor]
+    #             # Take fron nowAndNeighbor one element using probability
+    #             if (np.random.choice(nowAndNeighbor,1,probability) == 2):
+    #                 newStateListPawn = neighbor
+    #             neighbor = self.chooseNextStatesFromListRandomly(newStateListPawn, self.compareListOfPawnWithColor)
 
-        return newStateListPawn
+    #     return newStateListPawn
 
-    # Decrease T gradually by t (time), descentRate and delay
-    def scheduleFunction(self, t, T, descentRate, delay):
-        if (t != 0) and (t%delay == 0):
-            return T - (T * descentRate)
-        else:
-            return T
+    # # Decrease T gradually by t (time), descentRate and delay
+    # def scheduleFunction(self, t, T, descentRate, delay):
+    #     if (t != 0) and (t%delay == 0):
+    #         return T - (T * descentRate)
+    #     else:
+    #         return T
         
-    # Calculate probability, Ti is T that has been decreased
-    def calculateProbability(self, Ti, listNow: List[PawnElement], listNeighbor: List[PawnElement]):
-        scoreNow = self.scoringListOfPawnWithColor(listNow)
-        scoreNeighbor = self.scoringListOfPawnWithColor(listNeighbor)
-        return np.exp((scoreNeighbor-scoreNow)/Ti)
+    # # Calculate probability, Ti is T that has been decreased
+    # def calculateProbability(self, Ti, listNow: List[PawnElement], listNeighbor: List[PawnElement]):
+    #     scoreNow = self.scoringListOfPawnWithColor(listNow)
+    #     scoreNeighbor = self.scoringListOfPawnWithColor(listNeighbor)
+    #     return np.exp((scoreNeighbor-scoreNow)/Ti)
 
     # Return 1 if A > B, 0 if A == B and -1 if A < B
     def compareListOfPawnWithColor(self, listOfPawnA: List[PawnElement], listOfPawnB: List[PawnElement]):
@@ -143,102 +197,102 @@ class Board:
     # Making list of scores from all pawns
     def scoringListOfPawnWithColor(self, listOfPawn: List[PawnElement]) -> int:
         n = len(listOfPawn)
-        scoreIntersectionDifferentColor = 0
-        scoreIntersectionSameColor = 0
+        scoreIntersectingDifferentColor = 0
+        scoreIntersectingSameColor = 0
         for i in range(0, n):
-            tempScoreIntersectionDifferentColor = 0
-            tempScoreIntersectionSameColor = 0
+            tempScoreIntersectingDifferentColor = 0
+            tempScoreIntersectingSameColor = 0
             if listOfPawn[i].pawnElement == PawnType.KNIGHT :
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringKnightWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringKnightWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.BISHOP:
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringBishopWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringBishopWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.ROOK:
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringRookWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringRookWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.QUEEN:
-                tempScoreIntersectionDifferentColor1, tempScoreIntersectionSameColor1 = self.scoringRookWithColor(listOfPawn, i)
-                tempScoreIntersectionDifferentColor2, tempScoreIntersectionSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
-                
-                tempScoreIntersectionDifferentColor = tempScoreIntersectionDifferentColor1 + tempScoreIntersectionDifferentColor2
-                tempScoreIntersectionSameColor = tempScoreIntersectionSameColor1 + tempScoreIntersectionSameColor2
-            scoreIntersectionDifferentColor += tempScoreIntersectionDifferentColor
-            scoreIntersectionSameColor += tempScoreIntersectionSameColor 
+                tempScoreIntersectingDifferentColor1, tempScoreIntersectingSameColor1 = self.scoringRookWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor2, tempScoreIntersectingSameColor2 = self.scoringBishopWithColor(listOfPawn, i)        
+                tempScoreIntersectingDifferentColor = tempScoreIntersectingDifferentColor1 + tempScoreIntersectingDifferentColor2
+                tempScoreIntersectingSameColor = tempScoreIntersectingSameColor1 + tempScoreIntersectingSameColor2
 
-        return abs(scoreIntersectionDifferentColor - scoreIntersectionSameColor)
+            scoreIntersectingDifferentColor += tempScoreIntersectingDifferentColor
+            scoreIntersectingSameColor += tempScoreIntersectingSameColor 
+
+        return abs(scoreIntersectingDifferentColor - scoreIntersectingSameColor)
 
     # Making neighbours' score for knights
     def scoringKnightWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
-        scoreIntersectionDifferentColor = 0
-        scoreIntersectionSameColor = 0
+        scoreIntersectingDifferentColor = 0
+        scoreIntersectingSameColor = 0
         rowTransition = [-1, -1, 1, 1, -2, 2, -2, 2]
-        colomTransition = [-2, 2, -2, 2, -1, -1, 1, 1]
+        columnTransition = [-2, 2, -2, 2, -1, -1, 1, 1]
         nPossibility = len(rowTransition)
 
         for i in range(0,nPossibility):
             rowMove = listOfPawn[idx].row + rowTransition[i]
-            colomMove = listOfPawn[idx].colom + colomTransition[i]
+            columnMove = listOfPawn[idx].column + columnTransition[i]
 
-            if self.isValidCoordinate(rowMove, colomMove):
-                searchResult = self.findElementWithCoordinate(rowMove, colomMove, listOfPawn)
+            if self.isValidCoordinate(rowMove, columnMove):
+                searchResult = self.findElementWithCoordinate(rowMove, columnMove, listOfPawn)
                 if searchResult != self.NOT_FOUND:
                     if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
-                        scoreIntersectionSameColor += 1
+                        scoreIntersectingSameColor += 1
                     else:
-                        scoreIntersectionDifferentColor += 1
+                        scoreIntersectingDifferentColor += 1
 
 
-        return scoreIntersectionDifferentColor, scoreIntersectionSameColor
+        return scoreIntersectingDifferentColor, scoreIntersectingSameColor
 
     # Making neighbours' scores for bishop break if found
     def scoringBishopWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, -1, 1, 1]
-        colomTransition = [-1, 1, -1, 1]
+        columnTransition = [-1, 1, -1, 1]
         nDirection = len(rowTransition)
-        scoreIntersectionDifferentColor = 0
-        scoreIntersectionSameColor = 0
+        scoreIntersectingDifferentColor = 0
+        scoreIntersectingSameColor = 0
 
         for i in range(0, nDirection):
             rNow = listOfPawn[idx].row
-            cNow = listOfPawn[idx].colom
+            cNow = listOfPawn[idx].column
             while True:
                 rNow = rNow + rowTransition[i]
-                cNow = cNow + colomTransition[i]
+                cNow = cNow + columnTransition[i]
                 if self.isValidCoordinate(rNow,cNow):
                     searchResult = self.findElementWithCoordinate(rNow, cNow, listOfPawn)
                     if searchResult != self.NOT_FOUND:
                         if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
-                            scoreIntersectionSameColor += 1
+                            scoreIntersectingSameColor += 1
                         else:
-                            scoreIntersectionDifferentColor += 1
+                            scoreIntersectingDifferentColor += 1
                         break                     
                 else:
                     break
-        return scoreIntersectionDifferentColor, scoreIntersectionSameColor
+        return scoreIntersectingDifferentColor, scoreIntersectingSameColor
 
     # Making neighbours' scores for Rook, break if found
     def scoringRookWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, 0, 0, 1]
-        colomTransition = [0, -1, 1, 0]
+        columnTransition = [0, -1, 1, 0]
         nDirection = len(rowTransition)
-        scoreIntersectionDifferentColor = 0
-        scoreIntersectionSameColor = 0
+        scoreIntersectingDifferentColor = 0
+        scoreIntersectingSameColor = 0
 
         for i in range(0, nDirection):
             rNow = listOfPawn[idx].row
-            cNow = listOfPawn[idx].colom
+            cNow = listOfPawn[idx].column
             while True:
                 rNow = rNow + rowTransition[i]
-                cNow = cNow + colomTransition[i]
+                cNow = cNow + columnTransition[i]
                 if self.isValidCoordinate(rNow,cNow):
                     searchResult = self.findElementWithCoordinate(rNow, cNow, listOfPawn)
                     if searchResult != self.NOT_FOUND:
                         if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
-                            scoreIntersectionSameColor += 1
+                            scoreIntersectingSameColor += 1
                         else:
-                            scoreIntersectionDifferentColor += 1   
+                            scoreIntersectingDifferentColor += 1   
                         break                     
                 else:
                     break
-        return scoreIntersectionDifferentColor, scoreIntersectionSameColor
+        return scoreIntersectingDifferentColor, scoreIntersectingSameColor
 
     # Print the board
     def printBoard(self, listOfPawn: List[PawnElement]):
@@ -271,38 +325,36 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
-    # Calculate the number of PAWN not the ATTACK
-    def calculatePawnThatAttackSameOrDifferentColor(self, listOfPawn: List[PawnElement]) -> (int, int):
+    def calculatePawnAttack(self, listOfPawn: List[PawnElement]) -> (int, int):
         n = len(listOfPawn)
-        scoreIntersectionDifferentColor = 0
-        scoreIntersectionSameColor = 0
+        scoreIntersectingDifferentColor = 0
+        scoreIntersectingSameColor = 0
         for i in range(0, n):
-            tempScoreIntersectionDifferentColor = 0
-            tempScoreIntersectionSameColor = 0
+            tempScoreIntersectingDifferentColor = 0
+            tempScoreIntersectingSameColor = 0
             if listOfPawn[i].pawnElement == PawnType.KNIGHT :
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringKnightWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringKnightWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.BISHOP:
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringBishopWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringBishopWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.ROOK:
-                tempScoreIntersectionDifferentColor, tempScoreIntersectionSameColor = self.scoringRookWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringRookWithColor(listOfPawn, i)
             elif listOfPawn[i].pawnElement == PawnType.QUEEN:
-                tempScoreIntersectionDifferentColor1, tempScoreIntersectionSameColor1 = self.scoringRookWithColor(listOfPawn, i)
-                tempScoreIntersectionDifferentColor2, tempScoreIntersectionSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor1, tempScoreIntersectingSameColor1 = self.scoringRookWithColor(listOfPawn, i)
+                tempScoreIntersectingDifferentColor2, tempScoreIntersectingSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
                 
-                tempScoreIntersectionDifferentColor = tempScoreIntersectionDifferentColor1 + tempScoreIntersectionDifferentColor2
-                tempScoreIntersectionSameColor = tempScoreIntersectionSameColor1 + tempScoreIntersectionSameColor2
-            if tempScoreIntersectionDifferentColor != 0 :
-                scoreIntersectionDifferentColor += 1
-            if tempScoreIntersectionSameColor != 0 :
-                # print(tempScoreIntersectionSameColor)
+                tempScoreIntersectingDifferentColor = tempScoreIntersectingDifferentColor1 + tempScoreIntersectingDifferentColor2
+                tempScoreIntersectingSameColor = tempScoreIntersectingSameColor1 + tempScoreIntersectingSameColor2
+            if tempScoreIntersectingDifferentColor != 0 :
+                scoreIntersectingDifferentColor += 1
+            if tempScoreIntersectingSameColor != 0 :
+                # print(tempScoreIntersectingSameColor)
                 # print(listOfPawn[i].__dict__)
-                scoreIntersectionSameColor += 1
-        return scoreIntersectionDifferentColor, scoreIntersectionSameColor
+                scoreIntersectingSameColor += 1
+        return scoreIntersectingDifferentColor, scoreIntersectingSameColor
 
-    # Find an element on listOfPawn that located in (row,colom)
-    def findElementWithCoordinate(self, row, colom, listOfPawn: List[PawnElement]):
+    def findElementWithCoordinate(self, row, column, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         for i in range(0, n):
-            if listOfPawn[i].isTheSameCoordinate(row, colom):
+            if listOfPawn[i].isTheSameCoordinate(row, column):
                 return i
         return self.NOT_FOUND

@@ -6,21 +6,18 @@ class PawnElement:
         self.pawnElement = pawnElement
         self.pawnColor = pawnColor
         self.row = -1
-        self.colom = -1
+        self.column = -1
 
-    # Set row column = -1 jika unassigned
-    def isPawnUnassigned(self):
-        return self.row == -1 and self.colom == -1
-
-    # Set row column randomly
-    def randomizeRowColom(self):
+    def randomizeRowColumn(self):
         self.row = random.randint(1,8)
-        self.colom = random.randint(1,8)
+        self.column = random.randint(1,8)
 
     # Check if this pawn is on the same place with element
     def isInTheSamePlace(self, element):
-        return element.row == self.row and element.colom == self.colom
+        """
+        element: PawnElement
+        """
+        return element.row == self.row and element.column == self.column
 
-    # Check if this pawn is on a coordinate
-    def isTheSameCoordinate(self, row, colom):
-        return self.row == row and self.colom == colom
+    def isTheSameCoordinate(self, row, column):
+        return self.row == row and self.column == column

@@ -13,30 +13,31 @@ def makingInput(listOfPawn: List[PawnElement]):
             listOfPawn.append(newElementPawn)
             numberOfThisPawn -= 1
         n -= 1
-
+'''
 def printList(listOfPawn: List[PawnElement]):
     for element in listOfPawn:
         print(element.__dict__)
+'''
+
 listOfPawn = []
 makingInput(listOfPawn)
 board = Board(listOfPawn)
 
 board.initRandomState(board.listOfPawn)
 board.printBoard(board.listOfPawn)
+
+print("Ini hill climbing")
 hillClimbingResult = board.hillClimbing(board.listOfPawn)
 board.printBoard(hillClimbingResult)
-differentColor, sameColor = board.calculatePawnThatAttackSameOrDifferentColor(hillClimbingResult)
+differentColor, sameColor = board.calculatePawnAttack(hillClimbingResult)
 print(str(sameColor) + " " + str(differentColor))
+print(board.scoringListOfPawnWithColor(hillClimbingResult))
 
-print("SIMULATED ANNEALING")
-# Setting for Simulated Annealing
-T = 100
-descentRate = 0.05
-delay = 10
-scheduleFunction = board.scheduleFunction
-topLimit = 100000
-simulatedAnnealingResult = board.simulatedAnnealing(T, descentRate, delay, scheduleFunction, topLimit,board.listOfPawn)
+print("\n")
+print("\n")
+print("Ini Simulated Annealing")
+simulatedAnnealingResult = board.simulatedAnnealing(board.listOfPawn, 1000, 10, 10)
 board.printBoard(simulatedAnnealingResult)
-differentColor, sameColor = board.calculatePawnThatAttackSameOrDifferentColor(simulatedAnnealingResult)
+differentColor, sameColor = board.calculatePawnAttack(simulatedAnnealingResult)
 print(str(sameColor) + " " + str(differentColor))
-
+print(board.scoringListOfPawnWithColor(simulatedAnnealingResult))
