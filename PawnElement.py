@@ -11,7 +11,7 @@ class PawnElement:
     def isPawnUnassigned(self):
         return self.row == -1 and self.column == -1
 
-    def randomizeRowcolumn(self):
+    def randomizeRowColumn(self):
         self.row = random.randint(1,8)
         self.column = random.randint(1,8)
 
