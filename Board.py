@@ -25,9 +25,9 @@ class Board:
         n = len(listOfPawn)
 
         for i in range(0, n):
-            listOfPawn[i].randomizeRowColom()
+            listOfPawn[i].randomizeRowColumn()
             while not(self.isIdxthElementUniqueInList(i, listOfPawn)):
-                listOfPawn[i].randomizeRowColom()
+                listOfPawn[i].randomizeRowColumn()
 
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
         newStateListPawn = copy.deepcopy(listOfPawn)
@@ -37,16 +37,16 @@ class Board:
             neighbor = self.chooseNextStatesFromListWithHighestScore(newStateListPawn, self.compareListOfPawnWithColor)
         return newStateListPawn
 
-    def isEmptyCell(self, row, colom, listOfPawn):
+    def isEmptyCell(self, row, column, listOfPawn):
         found = False
         for element in listOfPawn:
-            if element.isTheSameCoordinate(row, colom):
+            if element.isTheSameCoordinate(row, column):
                 found = True
                 break
         return not(found)
 
-    def isValidCoordinate(self, row, colom):
-        return row >= 1 and row <= 8 and colom >= 1 and colom <=8 
+    def isValidCoordinate(self, row, column):
+        return row >= 1 and row <= 8 and column >= 1 and column <=8 
 
     def chooseNextStatesFromListWithHighestScore(self, listOfPawn: List[PawnElement], compareFunction):
         n = len(listOfPawn)
@@ -57,7 +57,7 @@ class Board:
                     if self.isEmptyCell(j,k,listOfPawn):
                         tempState = copy.deepcopy(listOfPawn)
                         tempState[i].row = j
-                        tempState[i].colom = k
+                        tempState[i].column = k
 
                         if highestScoreState == None:
                             highestScoreState = tempState
@@ -104,15 +104,15 @@ class Board:
         scoreIntersectionDifferentColor = 0
         scoreIntersectionSameColor = 0
         rowTransition = [-1, -1, 1, 1, -2, 2, -2, 2]
-        colomTransition = [-2, 2, -2, 2, -1, -1, 1, 1]
+        columnTransition = [-2, 2, -2, 2, -1, -1, 1, 1]
         nPossibility = len(rowTransition)
 
         for i in range(0,nPossibility):
             rowMove = listOfPawn[idx].row + rowTransition[i]
-            colomMove = listOfPawn[idx].colom + colomTransition[i]
+            columnMove = listOfPawn[idx].column + columnTransition[i]
 
-            if self.isValidCoordinate(rowMove, colomMove):
-                searchResult = self.findElementWithCoordinate(rowMove, colomMove, listOfPawn)
+            if self.isValidCoordinate(rowMove, columnMove):
+                searchResult = self.findElementWithCoordinate(rowMove, columnMove, listOfPawn)
                 if searchResult != self.NOT_FOUND:
                     if listOfPawn[searchResult].pawnColor == listOfPawn[idx].pawnColor:
                         scoreIntersectionSameColor += 1
@@ -124,17 +124,17 @@ class Board:
 
     def scoringBishopWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, -1, 1, 1]
-        colomTransition = [-1, 1, -1, 1]
+        columnTransition = [-1, 1, -1, 1]
         nDirection = len(rowTransition)
         scoreIntersectionDifferentColor = 0
         scoreIntersectionSameColor = 0
 
         for i in range(0, nDirection):
             rNow = listOfPawn[idx].row
-            cNow = listOfPawn[idx].colom
+            cNow = listOfPawn[idx].column
             while True:
                 rNow = rNow + rowTransition[i]
-                cNow = cNow + colomTransition[i]
+                cNow = cNow + columnTransition[i]
                 if self.isValidCoordinate(rNow,cNow):
                     searchResult = self.findElementWithCoordinate(rNow, cNow, listOfPawn)
                     if searchResult != self.NOT_FOUND:
@@ -149,17 +149,17 @@ class Board:
 
     def scoringRookWithColor(self, listOfPawn: List[PawnElement], idx) -> (int, int):
         rowTransition = [-1, 0, 0, 1]
-        colomTransition = [0, -1, 1, 0]
+        columnTransition = [0, -1, 1, 0]
         nDirection = len(rowTransition)
         scoreIntersectionDifferentColor = 0
         scoreIntersectionSameColor = 0
 
         for i in range(0, nDirection):
             rNow = listOfPawn[idx].row
-            cNow = listOfPawn[idx].colom
+            cNow = listOfPawn[idx].column
             while True:
                 rNow = rNow + rowTransition[i]
-                cNow = cNow + colomTransition[i]
+                cNow = cNow + columnTransition[i]
                 if self.isValidCoordinate(rNow,cNow):
                     searchResult = self.findElementWithCoordinate(rNow, cNow, listOfPawn)
                     if searchResult != self.NOT_FOUND:
@@ -229,9 +229,9 @@ class Board:
                 scoreIntersectionSameColor += 1
         return scoreIntersectionDifferentColor, scoreIntersectionSameColor
 
-    def findElementWithCoordinate(self, row, colom, listOfPawn: List[PawnElement]):
+    def findElementWithCoordinate(self, row, column, listOfPawn: List[PawnElement]):
         n = len(listOfPawn)
         for i in range(0, n):
-            if listOfPawn[i].isTheSameCoordinate(row, colom):
+            if listOfPawn[i].isTheSameCoordinate(row, column):
                 return i
         return self.NOT_FOUND
