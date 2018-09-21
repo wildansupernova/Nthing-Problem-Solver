@@ -8,14 +8,14 @@ class PawnElement:
         self.row = -1
         self.column = -1
 
-    def isPawnUnassigned(self):
-        return self.row == -1 and self.column == -1
-
     def randomizeRowColumn(self):
         self.row = random.randint(1,8)
         self.column = random.randint(1,8)
 
     def isInTheSamePlace(self, element):
+        """
+        element: PawnElement
+        """
         return element.row == self.row and element.column == self.column
 
     def isTheSameCoordinate(self, row, column):
