@@ -64,6 +64,44 @@ class Board:
             population[i] = population[j]
             population[j] = temp
     
+    # Genetic Algorithm
+    def geneticAlgorithm(self, limit, population: List[PopulationMember]):
+        self.sortPopulation(population)
+        newPopulation = []
+        n = len(population)
+        best = 0
+        for t in range(0,limit):
+            for i in range(1,n-1):
+                x,y = self.crossover(population,population[0],population[i])
+                newPopulation.append(x)
+                newPopulation.append(y)
+            population = newPopulation
+        max = population[0]
+        for x in population:
+            if x.fitness > max:
+                max = x
+        return max.listOfPawn
+        
+    def mutation(self, populationMember: PopulationMember):
+        listOfPawn = populationMember.listOfPawn
+        # Diapain ya
+
+    def crossover(self, population: List[PopulationMember], parent1: PopulationMember, parent2: PopulationMember) -> (PopulationMember,PopulationMember):
+        n = len(population)
+        cutPoint = random.randint(1,n-1)
+        i = 0
+        newStateListPawnA = []
+        newStateListPawnB = []
+        while (i < n):
+            if (i < cutPoint):
+                newStateListPawnA.append(parent1.listOfPawn[i])
+                newStateListPawnB.append(parent2.listOfPawn[i])
+            else:
+                newStateListPawnA.append(parent2.listOfPawn[i])
+                newStateListPawnB.append(parent1.listOfPawn[i])
+        x = PopulationMember(newStateListPawnA)
+        y = PopulationMember(newStateListPawnB)
+        return x,y
 
     # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
