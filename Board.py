@@ -44,13 +44,26 @@ class Board:
             population.append(PopulationMember(listOfPawn))
         return population
     
-        # Survival functin
-    def survivalFunction(self, populationMember: PopulationMember, population: List[PopulationMember], fitnessFunction):
+    # Survival functin
+    def survivalFunction(self, populationMember: PopulationMember, population: List[PopulationMember]):
         n = len(population)
         totalFit = 0
         for x in population:
             totalFit += x.fitness
         return populationMember.fitness/totalFit
+
+    # sort
+    def sortPopulation(self, population: List[PopulationMember]):
+        n = len(population)
+        for i in range(0,n-1):
+            max = i
+            for j in range(i+1,n):
+                if (population[j].fitness > population[i].fitness):
+                    max = j
+            temp = population[i]
+            population[i] = population[j]
+            population[j] = temp
+    
 
     # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
