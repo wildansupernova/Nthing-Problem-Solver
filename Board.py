@@ -30,19 +30,25 @@ class Board:
     # Randomize the location of pawns, every pawn in unique coordinate
     def initRandomState(self, listOfPawn):
         n = len(listOfPawn)
+        randomizedPawn = listOfPawn
 
         for i in range(0, n):
-            listOfPawn[i].randomizeRowColumn()
-            while not(self.isIdxthElementUniqueInList(i, listOfPawn)):
-                listOfPawn[i].randomizeRowColumn()
+            randomizedPawn[i].randomizeRowColumn()
+            while not(self.isIdxthElementUniqueInList(i, randomizedPawn)):
+                randomizedPawn[i].randomizeRowColumn()
+        
 
     # Make population
-    def initPopulation(self, N, listOfPawn):
-        population = []
+    def initPopulation(self, N, listOfPawn: List[PawnElement]) -> List[PopulationMember]: 
+        randPopulations = []
         for i in range(0,N):
-            self.initRandomState(listOfPawn)
-            population.append(PopulationMember(listOfPawn))
-        return population
+            newListOfPawn = copy.deepcopy(listOfPawn)
+            self.initRandomState(newListOfPawn)
+            randPop = PopulationMember(newListOfPawn, self)
+            randPopulations.append(randPop)
+            #self.printBoard(randPopulations[i].listOfPawn)
+
+        return randPopulations
     
     # Survival functin
     def survivalFunction(self, populationMember: PopulationMember, population: List[PopulationMember]):
@@ -53,17 +59,106 @@ class Board:
         return populationMember.fitness/totalFit
 
     # sort
-    def sortPopulation(self, population: List[PopulationMember]):
-        n = len(population)
+    def sortPopulation(self, initPopulation: List[PopulationMember]):
+        n = len(initPopulation)
+        sortedPopulation = initPopulation
         for i in range(0,n-1):
             max = i
             for j in range(i+1,n):
-                if (population[j].fitness > population[i].fitness):
+                #survivalFitnessI = self.survivalFunction(sortedPopulation[i], sortedPopulation)
+                #survivalFitnessJ = self.survivalFunction(sortedPopulation[j], sortedPopulation)
+                #if (survivalFitnessJ > survivalFitnessI):
+                if (sortedPopulation[j].fitness > sortedPopulation[max].fitness):
                     max = j
-            temp = population[i]
-            population[i] = population[j]
-            population[j] = temp
+            temp = sortedPopulation[i]
+            sortedPopulation[i] = sortedPopulation[max]
+            sortedPopulation[max] = temp
     
+    # One point crossover
+    def onePointCrossOver(self, parentA: PopulationMember, parentB: PopulationMember):
+        childA = []
+        childB = []
+        parentAPawn = parentA.listOfPawn
+        parentBPawn = parentB.listOfPawn
+        crossPoint = random.randint(1, len(parentAPawn)-1)
+
+        for i in range(0, crossPoint):
+            childA.append(parentAPawn[i])
+            childB.append(parentBPawn[i])
+        for i in range(crossPoint, len(parentAPawn)):
+            childA.append(parentBPawn[i])
+            childB.append(parentAPawn[i])
+
+        return PopulationMember(childA, self), PopulationMember(childB, self)
+
+    # Mutation of a population
+    def mutation(self, population: PopulationMember):
+        maxColAttack = 0
+        idxMax = 0
+        listOfPawn = population.listOfPawn
+        # search the max attacking pawn w/ the same color
+        for i in range(0, len(listOfPawn)):
+            _, sameColAttack = self.countPawnElementAttack(i, listOfPawn)
+            if maxColAttack < sameColAttack:
+                idxMax = i
+                maxColAttack = sameColAttack
+        # Mutation in element idxMax: switch pawn
+        mutatedPopulation = population
+        rowMax = mutatedPopulation.listOfPawn[idxMax].row
+        colMax = mutatedPopulation.listOfPawn[idxMax].column
+        idxSwitch = self.findElementWithCoordinate(rowMax, colMax, listOfPawn)
+        
+        rowTemp = mutatedPopulation.listOfPawn[idxMax].row
+        colTemp = mutatedPopulation.listOfPawn[idxMax].column
+        mutatedPopulation.listOfPawn[idxMax].row = mutatedPopulation.listOfPawn[idxSwitch].row
+        mutatedPopulation.listOfPawn[idxMax].column = mutatedPopulation.listOfPawn[idxSwitch].column
+        mutatedPopulation.listOfPawn[idxSwitch].row = rowMax
+        mutatedPopulation.listOfPawn[idxSwitch].row = colMax
+        return mutatedPopulation
+
+    # Generate child populations
+    def evolvePopulations(self, probCross, probMuta, populations: List[PopulationMember]):
+        childPopulations = []
+        parentA = populations[0]
+        for i in range(1, len(populations)):
+            parentB = populations[i]
+            # Cross Over
+            if random.random() < probCross:
+                childA, childB = self.onePointCrossOver(parentA, parentB)
+            else:
+                childA, childB = parentA, parentB
+            # Mutation
+            
+            if random.random() < probMuta:
+                childA = self.mutation(childA)
+                childB = self.mutation(childB)
+            
+            childPopulations += [childA, childB]
+        return childPopulations
+
+
+
+    def geneticAlgorithm(self, listOfPawn: List[PawnElement], probCross, probMuta, numOfGeneration):
+        N = 50
+        populations = self.initPopulation(N, listOfPawn)
+
+        self.sortPopulation(populations)
+
+        count = 0
+        while True:
+            childPopulations = self.evolvePopulations(probCross, probMuta, populations)
+            populations = childPopulations
+            self.sortPopulation(populations)
+            cutChildPopulations = []
+            for i in range(0,N):
+                cutChildPopulations.append(populations[i])
+            
+            populations = cutChildPopulations
+            count += 1
+            if count == numOfGeneration or len(populations) <= 2:
+                break
+        lastListOfPawn = childPopulations[0].listOfPawn
+        return lastListOfPawn
 
     # Hill Climbing Algorithm
     def hillClimbing(self, listOfPawn: List[PawnElement]) -> List[PawnElement]:
@@ -198,17 +293,8 @@ class Board:
         for i in range(0, n):
             tempScoreIntersectingDifferentColor = 0
             tempScoreIntersectingSameColor = 0
-            if listOfPawn[i].pawnElement == PawnType.KNIGHT :
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringKnightWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.BISHOP:
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringBishopWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.ROOK:
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringRookWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.QUEEN:
-                tempScoreIntersectingDifferentColor1, tempScoreIntersectingSameColor1 = self.scoringRookWithColor(listOfPawn, i)
-                tempScoreIntersectingDifferentColor2, tempScoreIntersectingSameColor2 = self.scoringBishopWithColor(listOfPawn, i)        
-                tempScoreIntersectingDifferentColor = tempScoreIntersectingDifferentColor1 + tempScoreIntersectingDifferentColor2
-                tempScoreIntersectingSameColor = tempScoreIntersectingSameColor1 + tempScoreIntersectingSameColor2
+            
+            tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.countPawnElementAttack(i, listOfPawn)
 
             scoreIntersectingDifferentColor += tempScoreIntersectingDifferentColor
             scoreIntersectingSameColor += tempScoreIntersectingSameColor 
@@ -321,6 +407,22 @@ class Board:
             resultString += "\n"              
         print(resultString)
 
+    # Count pawns attacking pawnIdx
+    def countPawnElementAttack(self, pawnIdx, listOfPawn: List[PawnElement]) -> (int, int):
+        if listOfPawn[pawnIdx].pawnElement == PawnType.KNIGHT :
+            tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringKnightWithColor(listOfPawn, pawnIdx)
+        elif listOfPawn[pawnIdx].pawnElement == PawnType.BISHOP:
+            tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringBishopWithColor(listOfPawn, pawnIdx)
+        elif listOfPawn[pawnIdx].pawnElement == PawnType.ROOK:
+            tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringRookWithColor(listOfPawn, pawnIdx)
+        elif listOfPawn[pawnIdx].pawnElement == PawnType.QUEEN:
+            tempScoreIntersectingDifferentColor1, tempScoreIntersectingSameColor1 = self.scoringRookWithColor(listOfPawn, pawnIdx)
+            tempScoreIntersectingDifferentColor2, tempScoreIntersectingSameColor2 = self.scoringBishopWithColor(listOfPawn, pawnIdx)
+            
+            tempScoreIntersectingDifferentColor = tempScoreIntersectingDifferentColor1 + tempScoreIntersectingDifferentColor2
+            tempScoreIntersectingSameColor = tempScoreIntersectingSameColor1 + tempScoreIntersectingSameColor2
+        return tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor
+
     # Calculate numbers of Pawn Attack
     def calculatePawnAttack(self, listOfPawn: List[PawnElement]) -> (int, int):
         n = len(listOfPawn)
@@ -329,18 +431,7 @@ class Board:
         for i in range(0, n):
             tempScoreIntersectingDifferentColor = 0
             tempScoreIntersectingSameColor = 0
-            if listOfPawn[i].pawnElement == PawnType.KNIGHT :
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringKnightWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.BISHOP:
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringBishopWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.ROOK:
-                tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.scoringRookWithColor(listOfPawn, i)
-            elif listOfPawn[i].pawnElement == PawnType.QUEEN:
-                tempScoreIntersectingDifferentColor1, tempScoreIntersectingSameColor1 = self.scoringRookWithColor(listOfPawn, i)
-                tempScoreIntersectingDifferentColor2, tempScoreIntersectingSameColor2 = self.scoringBishopWithColor(listOfPawn, i)
-                
-                tempScoreIntersectingDifferentColor = tempScoreIntersectingDifferentColor1 + tempScoreIntersectingDifferentColor2
-                tempScoreIntersectingSameColor = tempScoreIntersectingSameColor1 + tempScoreIntersectingSameColor2
+            tempScoreIntersectingDifferentColor, tempScoreIntersectingSameColor = self.countPawnElementAttack(i, listOfPawn)
             if tempScoreIntersectingDifferentColor != 0 :
                 scoreIntersectingDifferentColor += 1
             if tempScoreIntersectingSameColor != 0 :

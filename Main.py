@@ -23,8 +23,8 @@ listOfPawn = []
 makingInput(listOfPawn)
 board = Board(listOfPawn)
 
-board.initRandomState(board.listOfPawn)
-board.printBoard(board.listOfPawn)
+board.initRandomState(listOfPawn)
+board.printBoard(listOfPawn)
 
 print("Ini hill climbing")
 hillClimbingResult = board.hillClimbing(board.listOfPawn)
@@ -34,10 +34,20 @@ print(str(sameColor) + " " + str(differentColor))
 print(board.scoringListOfPawnWithColor(hillClimbingResult))
 
 print("\n")
-print("\n")
 print("Ini Simulated Annealing")
 simulatedAnnealingResult = board.simulatedAnnealing(board.listOfPawn, 1000, 10, 10)
 board.printBoard(simulatedAnnealingResult)
 differentColor, sameColor = board.calculatePawnAttack(simulatedAnnealingResult)
 print(str(sameColor) + " " + str(differentColor))
 print(board.scoringListOfPawnWithColor(simulatedAnnealingResult))
+
+print("\n")
+print("Ini GA")
+generations = 50
+probCross = 1
+probMuta = 1
+geneticAlgorithmResult = board.geneticAlgorithm(board.listOfPawn, probCross, probMuta, generations)
+board.printBoard(geneticAlgorithmResult)
+differentColor, sameColor = board.calculatePawnAttack(geneticAlgorithmResult)
+print(str(sameColor) + " " + str(differentColor))
+print(board.scoringListOfPawnWithColor(geneticAlgorithmResult))
