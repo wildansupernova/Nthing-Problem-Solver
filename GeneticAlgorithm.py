@@ -90,6 +90,29 @@ class GeneticAlgorithm:
             sortedPopulation[i] = sortedPopulation[max]
             sortedPopulation[max] = temp
     
+    # Check if pawn 
+    def isPawnSamePlace(self, pawnA: PawnElement, parentBPawn: List[PawnElement]):
+        for pawnB in parentBPawn:
+            if pawnA.row == pawnB.row and pawnA.column == pawnB.column:
+                return True
+        return False
+    
+    def placePawnRandomly(self, pawn: PawnElement, listOfPawn: List[PawnElement]):
+        replacedPawn = pawn
+        while True:
+            found = False
+            randRow = random.randint(1, 8)
+            randCol = random.randint(1, 8)
+            for pawnCheck in listOfPawn:
+                if pawnCheck.row != randRow and pawnCheck.column != randCol:
+                    replacedPawn.row = randRow
+                    replacedPawn.column = randCol
+                    found = True
+            if found:
+                break
+
+        return replacedPawn
+
     # One point crossover
     def onePointCrossOver(self, parentA: PopulationMember, parentB: PopulationMember):
         childA = []
@@ -101,9 +124,19 @@ class GeneticAlgorithm:
         for i in range(0, crossPoint):
             childA.append(parentAPawn[i])
             childB.append(parentBPawn[i])
+
         for i in range(crossPoint, len(parentAPawn)):
-            childA.append(parentBPawn[i])
-            childB.append(parentAPawn[i])
+            if not self.isPawnSamePlace(parentBPawn[i], parentAPawn):
+                childAPawn = copy.deepcopy(parentAPawn[i])
+            else:
+                childAPawn = self.placePawnRandomly(parentBPawn[i], childB)
+            if not self.isPawnSamePlace(parentAPawn[i], parentBPawn):
+                childBPawn = copy.deepcopy(parentAPawn[i])
+            else:
+                childBPawn = self.placePawnRandomly(parentAPawn[i], childA)
+            childA.append(childAPawn)
+            childB.append(childBPawn)
+
         boardA = Board(childA)
         boardB = Board(childB)
         return PopulationMember(boardA), PopulationMember(boardB)
@@ -124,7 +157,7 @@ class GeneticAlgorithm:
         mutatedList = mutatedPopulationMember.getBoard().getListOfPawn()
         rowMax =mutatedList[idxMax].row
         colMax =mutatedList[idxMax].column
-        idxSwitch = populationMember.getBoard().findElementWithCoordinate(rowMax, colMax)
+        idxSwitch = random.randint(0, len(populationMember.board.listOfPawn)-1)
         
         rowTemp =mutatedList[idxMax].row
         colTemp =mutatedList[idxMax].column
@@ -164,12 +197,13 @@ class GeneticAlgorithm:
 
         count = 0
         while True:
+            print('aaaa')
             self.evolvePopulations()
             self.sortPopulation()
             cutChildPopulations = []
+            self.setPopulation(cutChildPopulations)      
             for i in range(0,self.getN()):
                 cutChildPopulations.append(populations[i])
-            
             self.setPopulation(cutChildPopulations)
             count += 1
             if count == self.getNumOfGeneration() or self.getPopulationLength() <= 2:
