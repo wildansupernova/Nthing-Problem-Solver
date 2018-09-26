@@ -22,7 +22,7 @@ class Board:
         return self.listOfPawn
     
     def setListOfPawn(self, listOfPawn):
-        self.listOfPawn = listOfPawn
+        self.listOfPawn = copy.deepcopy(listOfPawn)
 
     def getLength(self):
         return len(self.getListOfPawn())

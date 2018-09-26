@@ -8,6 +8,10 @@ class PawnElement:
         self.row = -1
         self.column = -1
 
+    def setPawnCoordinate(self, newPawn):
+        self.row = newPawn.row
+        self.column = newPawn.column
+
     def randomizeRowColumn(self):
         self.row = random.randint(1,8)
         self.column = random.randint(1,8)
