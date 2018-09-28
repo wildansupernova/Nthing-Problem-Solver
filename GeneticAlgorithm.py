@@ -2,6 +2,7 @@ from PawnElement import PawnElement
 from PopulationMember import PopulationMember
 from typing import List
 from Board import Board
+import collections
 import copy
 import random
 
@@ -85,19 +86,26 @@ class GeneticAlgorithm:
             sortedPopulation[i] = sortedPopulation[max]
             sortedPopulation[max] = temp
     
-    # Check if coordinate of pawnA is empty in list of pawn B (parentBPawn)
-    def isPawnSaveToPlace(self, pawnA: PawnElement, parentBPawn: List[PawnElement]):
-        for pawnB in parentBPawn:
-            if pawnA.row == pawnB.row and pawnA.column == pawnB.column:
-                return False
-        return True
+    def getListOfPawnCoord(self, listOfPawn: List[PawnElement]):
+        listOfPawnCoord = []
+        for pawn in listOfPawn:
+            listOfPawnCoord.append((pawn.row, pawn.column))
+        return listOfPawnCoord
+
+    # Check is there any overlapping pawn
+    def isPawnOverlapping(self, listOfPawn: List[PawnElement]):
+        setOfPawn = set(listOfPawn)
+        return len(listOfPawn) != len(setOfPawn)
+
+    def isPawnSaveToPlace(self, pawn: PawnElement, listOfPawn: List[PawnElement]):
+        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
+        return (pawn.row, pawn.column) not in listOfPawnCoord
     
     # Place pawn randomly on save coordinate
     def placePawnRandomly(self, pawnCheck: PawnElement, listOfPawn: List[PawnElement]) -> PawnElement:
         replacedPawn = copy.deepcopy(pawnCheck)
-        listOfPawnCoord = []
-        for pawn in listOfPawn:
-            listOfPawnCoord.append((pawn.row, pawn.column))
+        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
+
         while True:
             replacedPawn.randomizeRowColumn()
             randRow, randCol = replacedPawn.row, replacedPawn.column
@@ -114,21 +122,26 @@ class GeneticAlgorithm:
         crossPoint = random.randint(1, len(parentAPawn)-1)
 
         for i in range(0, crossPoint):
-            childA.append(copy.deepcopy(parentAPawn[i]))
-            childB.append(copy.deepcopy(parentBPawn[i]))
+            childA.append(parentAPawn[i])
+            childB.append(parentBPawn[i])
 
         for i in range(crossPoint, len(parentAPawn)):
-            if self.isPawnSaveToPlace(parentBPawn[i], parentAPawn):
-                childAPawn = copy.deepcopy(parentBPawn[i])
+            if self.isPawnSaveToPlace(parentBPawn[i], childA):
+                childAPawn = parentBPawn[i]
             else:
                 childAPawn = self.placePawnRandomly(parentBPawn[i], childA)
-            if self.isPawnSaveToPlace(parentAPawn[i], parentBPawn):
-                childBPawn = copy.deepcopy(parentAPawn[i])
+            if self.isPawnSaveToPlace(parentAPawn[i], childB):
+                childBPawn = parentAPawn[i]
             else:
                 childBPawn = self.placePawnRandomly(parentAPawn[i], childB)
             childA.append(childAPawn)
             childB.append(childBPawn)
-
+        """
+        # Avoid overlapping pawn position
+        if self.isPawnOverlapping(childA):
+            listOfPawnCoord = self.getListOfPawnCoord(childA)
+            for 
+        """
         boardA = Board(childA)
         boardB = Board(childB)
         return PopulationMember(boardA), PopulationMember(boardB)
@@ -146,23 +159,6 @@ class GeneticAlgorithm:
             if maxColAttack < sameColAttack:
                 idxMax = i
                 maxColAttack = sameColAttack
-        # Mutation in element idxMax: switch pawn
-        mutatedPopulationMember = populationMember
-        mutatedList = mutatedPopulationMember.getBoard().getListOfPawn()
-        #mutatePawn = populationMember.board.listOfPawn[idxMax]
-        #mutatePawn = self.placePawnRandomly(mutatePawn, mutatedList)
-        
-        rowMax = mutatedList[idxMax].row
-        colMax = mutatedList[idxMax].column
-        
-        idxSwitch = random.randint(0, len(populationMember.board.listOfPawn)-1)
-        
-        rowTemp = mutatedList[idxMax].row
-        colTemp = mutatedList[idxMax].column
-        mutatedList[idxMax].row = mutatedList[idxSwitch].row
-        mutatedList[idxMax].column = mutatedList[idxSwitch].column
-        mutatedList[idxSwitch].row = rowMax
-        mutatedList[idxSwitch].row = colMax
         """
         idx = random.randint(0, len(mutatedPopulation.board.listOfPawn)-1)
         listOfPawn = mutatedPopulation.getBoard().getListOfPawn()
@@ -184,8 +180,8 @@ class GeneticAlgorithm:
                 childA, childB = self.onePointCrossOver(parentA, parentB)
             else:
                 childA, childB = parentA, parentB
+                
             # Mutation
-            
             if random.random() < self.getProbMuta():
                 childA = self.mutation(childA)
                 childB = self.mutation(childB)
