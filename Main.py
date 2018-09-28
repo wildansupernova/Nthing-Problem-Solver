@@ -7,6 +7,25 @@ from GeneticAlgorithm import GeneticAlgorithm
 import copy
 
 def makingInput(listOfPawn: List[PawnElement]):
+    filename = input(">> Please input file name which contains your pawns: ")
+    print("Loading " + str(filename) + " . . . ")
+
+    try:
+        with open(filename) as file: 
+            stream: str = file.readlines()
+            for inp in stream:
+                splitResult = inp.split(" ")
+                numberOfThisPawn = int(splitResult[2])
+                while numberOfThisPawn>0: 
+                    newElementPawn = PawnElement(splitResult[1], splitResult[0])
+                    listOfPawn.append(newElementPawn)
+                    numberOfThisPawn -= 1
+        print("File opened successfully. ")
+    except IOError:
+        print("Could not read file : ", filename)
+
+'''
+def makingInput(listOfPawn: List[PawnElement]):
     n = int(input())
     while n>0: 
         inp: str = input()
@@ -17,6 +36,7 @@ def makingInput(listOfPawn: List[PawnElement]):
             listOfPawn.append(newElementPawn)
             numberOfThisPawn -= 1
         n -= 1
+'''
 
 def menu():
     print("Which algorithm do you prefer?")
@@ -25,33 +45,33 @@ def menu():
     print("3. Genetic Algorithm")
 
 def inputMenu() -> int:
-    x = int(input("Input choosen menu (1 or 2 or 3) : "))
+    x = int(input(">> Input choosen menu (1 or 2 or 3) : "))
     while (x < 1) or (x > 3):
         print("Please input integer 1 or 2 or 3 only.")
-        x = input("Input choosen menu (1 or 2 or 3) : ")
+        x = input(">> Input choosen menu (1 or 2 or 3) : ")
     return x
 
 def menuSetting() -> int:
     print("Do you want to edit algorithm configuration?")
     print("1. Yes, I want.")
     print("2. No, use default.")
-    choice = int(input("Input your choice (1 or 2) : "))
+    choice = int(input(">> Input your choice (1 or 2) : "))
     while (choice < 1) or (choice>2):
-        print("Please input integer 1 or 2only.")
-        choice = int(input("Input your choice (1 or 2) : "))
+        print("Please input integer 1 or 2 only.")
+        choice = int(input(">> Input your choice (1 or 2) : "))
     return choice
 
 def inputSettingSimulatedAnnealing() -> (int, int, int):
-    x = int(input("Input Temperature : "))
-    y = int(input("Input Descent Rate : "))
-    z = int(input("Input Delay Step : "))
+    x = int(input(">> Input Temperature : "))
+    y = int(input(">> Input Descent Rate : "))
+    z = int(input(">> Input Delay Step : "))
     return x,y,z
 
 def inputSettingGeneticAlgorithm() -> (int,int,int,int):
-    w = int(input("Input Number of Population Member : "))
-    x = int(input("Input Probability of Crossover : "))
-    y = int(input("Input Probability of Mutation : "))
-    z = int(input("Input Number of Generations Generated : "))
+    w = int(input(">> Input Number of Population Member : "))
+    x = int(input(">> Input Probability of Crossover : "))
+    y = int(input(">> Input Probability of Mutation : "))
+    z = int(input(">> Input Number of Generations Generated : "))
     return w,x,y,z
     
 '''
@@ -60,7 +80,6 @@ def printList(listOfPawn: List[PawnElement]):
         print(element.__dict__)
 '''
 def main():
-    print("Please input your pawns")
     listOfPawn = []
     makingInput(listOfPawn)
     board = Board(listOfPawn)
