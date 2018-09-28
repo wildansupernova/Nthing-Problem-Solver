@@ -307,7 +307,7 @@ class Board:
             scoreIntersectingDifferentColor += tempScoreIntersectingDifferentColor
             scoreIntersectingSameColor += tempScoreIntersectingSameColor 
 
-        return abs(scoreIntersectingDifferentColor - scoreIntersectingSameColor)
+        return abs((2*scoreIntersectingDifferentColor) - scoreIntersectingSameColor)
 
     # Making neighbours' score for knights
     def scoringKnightWithColor(self, idx) -> (int, int):
