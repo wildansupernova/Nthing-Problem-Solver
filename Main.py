@@ -24,20 +24,6 @@ def makingInput(listOfPawn: List[PawnElement]):
     except IOError:
         print("Could not read file : ", filename)
 
-'''
-def makingInput(listOfPawn: List[PawnElement]):
-    n = int(input())
-    while n>0: 
-        inp: str = input()
-        splitResult = inp.split(" ")
-        numberOfThisPawn = int(splitResult[2])
-        while numberOfThisPawn>0: 
-            newElementPawn = PawnElement(splitResult[1], splitResult[0])
-            listOfPawn.append(newElementPawn)
-            numberOfThisPawn -= 1
-        n -= 1
-'''
-
 def menu():
     print("Which algorithm do you prefer?")
     print("1. Hill Climbing")
