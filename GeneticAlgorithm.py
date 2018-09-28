@@ -205,7 +205,6 @@ class GeneticAlgorithm:
     ## MAIN ALGORITHM ##
     def algorithm(self):
         self.sortPopulations()
-        print()
 
         for i in range(0, self.numOfGeneration):
             # Crossover and Mutation
@@ -216,13 +215,12 @@ class GeneticAlgorithm:
             
             # Pick only N populations to evolve
             self.trimPopulations()
-            #self.getPopulations()[0].board.printBoard()
 
             currBestPop = self.getPopulations()[0]
             
             # output
-            print('== ', i+1, 'th gen')
-            print('  Current Best Fitness Value: ', currBestPop.getFitness())
+            #print('== ', i+1, 'th gen')
+            #print('  Current Best Fitness Value: ', currBestPop.getFitness())
             self.checkAllTimeBestPopulation(currBestPop)
 
         self.printAllTimeBestPopulation()
@@ -232,11 +230,11 @@ class GeneticAlgorithm:
     def printAllTimeBestPopulation(self):
         allTimeBest = self.allTimeBestPopulation
         print('===========')
-        print('  ** All Time Best Population: ')
+        print(' ** All Time Best Population: ')
         attackDiff, attackSame = allTimeBest.getBoard().calculatePawnAttack()
         allTimeBest.board.printBoard()
-        print('  ', attackSame, attackDiff)
-        print('  Score: ', allTimeBest.getBoard().scoringListOfPawnWithColor())
+        print(' ', attackSame, attackDiff)
+        print(' Score: ', allTimeBest.getBoard().scoringListOfPawnWithColor())
         #print('  Fitness Value: ', allTimeBest.getFitness())
         print('===========')
 
