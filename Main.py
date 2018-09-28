@@ -101,8 +101,8 @@ def main():
             N,probCross,probMuta,generations = inputSettingGeneticAlgorithm()
         else: #choice == 2
             generations = 50
-            probCross = 1
-            probMuta = 1
+            probCross = 0.7
+            probMuta = 0.3
             N = 50
         useGeneticAlgorithm = GeneticAlgorithm(board,N,probCross,probMuta,generations)
         geneticAlgorithmResult = useGeneticAlgorithm.algorithm()

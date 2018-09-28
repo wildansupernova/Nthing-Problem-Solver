@@ -11,19 +11,19 @@ class PopulationMember:
 
     def getBoard(self):
         return self.board
-    
-    def getFitness(self):
-        return self.fitness
 
     def setBoard(self, board):
         self.board = copy.deepcopy(board)
         self.fitness = self.fitnessFunction()
+    
+    def getFitness(self):
+        return self.fitness
 
     # Fitness function non-attacking-same-colour + attacking-different-colour pawns
     def fitnessFunction(self):
-        
+        """
         attackDiff, attackSame = self.getBoard().calculatePawnAttack()
         nonAttackSame = self.getBoard().getLength() - attackSame
         return nonAttackSame + attackDiff
-        
-        #return self.getBoard().scoringListOfPawnWithColor()
+        """
+        return self.board.scoringListOfPawnWithColor()

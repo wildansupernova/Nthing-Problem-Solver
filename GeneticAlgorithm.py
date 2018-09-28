@@ -14,7 +14,8 @@ class GeneticAlgorithm:
         self.probCross = probCross
         self.probMuta = probMuta
         self.numOfGeneration = numOfGeneration
-        self.population = self.initPopulation()
+        self.populations = self.initPopulation()
+        self.allTimeBestPopulation = copy.deepcopy(self.populations[0])
 
     def getProbCross(self):
         return self.probCross
@@ -34,8 +35,8 @@ class GeneticAlgorithm:
     def setNumOfGeneration(self,numOfGeneration):
         self.numOfGeneration = numOfGeneration
 
-    def getPopulation(self):
-        return self.population
+    def getPopulations(self):
+        return self.populations
     
     def getN(self):
         return self.N
@@ -43,40 +44,45 @@ class GeneticAlgorithm:
     def setN(self, N):
         self.N = N
     
-    def getBoard(self):
+    def getInitBoard(self):
         return self.initBoard
     
-    def setBoard(self, board):
+    def setInitBoard(self, board):
         self.initBoard = board
 
     def setPopulation(self, population):
-        #self.population = copy.deepcopy(population)
-        self.population = population
+        self.populations = copy.deepcopy(population)
+        #self.populations = population
 
-    def getPopulationLength(self):
-        return len(self.getPopulation())
+    def getPopulationsLength(self):
+        return len(self.getPopulations())
 
-    # Make population
+    def setAllTimeBestPopulation(self, population):
+        self.allTimeBestPopulation = copy.deepcopy(population)
+
+    def getAllTimeBestPopulation(self):
+        return self.allTimeBestPopulation
+
+    ### TOOLS FOR GENETIC ALGORITHM EXECUTION ###
+
+    # Randomize initial populations
     def initPopulation(self) -> List[PopulationMember]: 
         randPopulations = []
         for i in range(0,self.getN()):
-            self.getBoard().initRandomState()
-            randPop = PopulationMember(self.getBoard())
+            self.getInitBoard().initRandomState()
+            randPop = PopulationMember(self.getInitBoard())
             randPopulations.append(randPop)
         return randPopulations
-    """
-    # Survival functin
-    def survivalFunction(self, populationMember: PopulationMember):
-        n = self.getPopulationLength()
-        totalFit = 0
-        for x in self.getPopulation():
-            totalFit += x.getFitness()
-        return populationMember.getFitness()/totalFit
-    """
-    # sort
-    def sortPopulation(self):
-        n = self.getPopulationLength()
-        sortedPopulation = self.getPopulation()
+    
+    # Check and set all time best population
+    def checkAllTimeBestPopulation(self, currBestPop: PopulationMember):
+        if currBestPop.getFitness() >= self.allTimeBestPopulation.getFitness():
+            self.setAllTimeBestPopulation(currBestPop)
+    
+    # Sort population based on fitness value
+    def sortPopulations(self):
+        n = self.getPopulationsLength()
+        sortedPopulation = self.getPopulations()
         for i in range(0,n-1):
             max = i
             for j in range(i+1,n):
@@ -86,22 +92,18 @@ class GeneticAlgorithm:
             sortedPopulation[i] = sortedPopulation[max]
             sortedPopulation[max] = temp
     
+    # Trim result of evolution populations into N pieces
+    def trimPopulations(self):
+        self.populations = self.populations[:self.getN()]
+    
+    # Return coordinates of pawn in a listOfPawn
     def getListOfPawnCoord(self, listOfPawn: List[PawnElement]):
         listOfPawnCoord = []
         for pawn in listOfPawn:
             listOfPawnCoord.append((pawn.row, pawn.column))
         return listOfPawnCoord
-
-    # Check is there any overlapping pawn
-    def isPawnOverlapping(self, listOfPawn: List[PawnElement]):
-        setOfPawn = set(listOfPawn)
-        return len(listOfPawn) != len(setOfPawn)
-
-    def isPawnSaveToPlace(self, pawn: PawnElement, listOfPawn: List[PawnElement]):
-        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
-        return (pawn.row, pawn.column) not in listOfPawnCoord
     
-    # Place pawn randomly on save coordinate
+    # Place pawn randomly on empty coordinates
     def placePawnRandomly(self, pawnCheck: PawnElement, listOfPawn: List[PawnElement]) -> PawnElement:
         replacedPawn = copy.deepcopy(pawnCheck)
         listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
@@ -113,18 +115,22 @@ class GeneticAlgorithm:
                 break
         return replacedPawn
 
+    # Crossover effect: Check is pawn coordinate is empty in listOfPawn
+    def isPawnSaveToPlace(self, pawn: PawnElement, listOfPawn: List[PawnElement]):
+        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
+        return (pawn.row, pawn.column) not in listOfPawnCoord
+
     # One point crossover
     def onePointCrossOver(self, parentA: PopulationMember, parentB: PopulationMember):
-        childA = []
-        childB = []
+        childA, childB = [], []
         parentAPawn = parentA.getBoard().getListOfPawn()
         parentBPawn = parentB.getBoard().getListOfPawn()
-        crossPoint = random.randint(1, len(parentAPawn)-1)
+        crossPoint = random.randint(1, len(parentAPawn)-2)
 
         for i in range(0, crossPoint):
             childA.append(parentAPawn[i])
             childB.append(parentBPawn[i])
-
+        
         for i in range(crossPoint, len(parentAPawn)):
             if self.isPawnSaveToPlace(parentBPawn[i], childA):
                 childAPawn = parentBPawn[i]
@@ -136,51 +142,58 @@ class GeneticAlgorithm:
                 childBPawn = self.placePawnRandomly(parentAPawn[i], childB)
             childA.append(childAPawn)
             childB.append(childBPawn)
-        """
-        # Avoid overlapping pawn position
-        if self.isPawnOverlapping(childA):
-            listOfPawnCoord = self.getListOfPawnCoord(childA)
-            for 
-        """
+
         boardA = Board(childA)
         boardB = Board(childB)
         return PopulationMember(boardA), PopulationMember(boardB)
 
-    # Mutation of a population
+    # Mutation: get pawn index which attacking the same color the most
+    def getMaxAttackingSameColorPawnIdx(self, population: PopulationMember, listOfPawn: List[PawnElement]) -> int:
+        maxAttack = 0
+        idx = 0
+        for i in range(0, len(listOfPawn)):
+            _, sameColorAttack = population.getBoard().countPawnElementAttack(i)
+            if maxAttack < sameColorAttack:
+                idx = i
+                maxAttack = sameColorAttack
+        return idx
+
+    # Mutate a population with the most constraining pawn with the same color
     def mutation(self, populationMember: PopulationMember) -> PopulationMember:
         mutatedPopulation = copy.deepcopy(populationMember)
         mutatedBoard = copy.deepcopy(populationMember.getBoard())
-        """
-        maxColAttack = 0
-        idxMax = 0
-        # search the max attacking pawn w/ the same color
-        for i in range(0, len(listOfPawn)):
-            _, sameColAttack = populationMember.getBoard().countPawnElementAttack(i)
-            if maxColAttack < sameColAttack:
-                idxMax = i
-                maxColAttack = sameColAttack
-        """
-        idx = random.randint(0, len(mutatedPopulation.board.listOfPawn)-1)
         listOfPawn = mutatedPopulation.getBoard().getListOfPawn()
+        
+        idx = self.getMaxAttackingSameColorPawnIdx(populationMember, listOfPawn)
 
         mutatedPawn = self.placePawnRandomly(listOfPawn[idx], listOfPawn)    
         mutatedPopulation.getBoard().getListOfPawn()[idx].setPawnCoordinate(mutatedPawn)
 
         return mutatedPopulation
 
-    # Generate child populations
+    # Generate N child populations. Evolve with CROSSOVER and MUTATION.
     def evolvePopulations(self):
         childPopulations = []
-        populations = self.getPopulation()
+        populations = self.getPopulations()
         parentA = populations[0]
-        for i in range(1, self.getPopulationLength()):
-            parentB = populations[i]
-            # Cross Over
+        for i in range(0, self.getPopulationsLength()//2):
+        #for i in range(0, self.getN()):
+            #parentA = populations[random.randint(0, self.getPopulationsLength()-1)]
+            #parentB = populations[random.randint(0, self.getPopulationsLength()-1)]
+        #while (i < self.getPopulationsLength()-1):
+        
+            #idx = random.sample(range(len(populations[0].board.listOfPawn)), 2)
+            parentA = populations[i]
+            parentB = populations[i + self.getPopulationsLength()//2]
+            #parentB = populations[i]
+            # Crossover
+            #childA, childB = self.onePointCrossOver(parentA, parentB)
+            #parentB = populations[i]
             if random.random() < self.getProbCross():
                 childA, childB = self.onePointCrossOver(parentA, parentB)
             else:
                 childA, childB = parentA, parentB
-                
+            
             # Mutation
             if random.random() < self.getProbMuta():
                 childA = self.mutation(childA)
@@ -189,36 +202,41 @@ class GeneticAlgorithm:
             childPopulations += [childA, childB]
         self.setPopulation(childPopulations)
 
-
+    ## MAIN ALGORITHM ##
     def algorithm(self):
-        self.sortPopulation()
+        self.sortPopulations()
         print()
 
-        #allTimeBestPop = self.getPopulation()[0]
         for i in range(0, self.numOfGeneration):
+            # Crossover and Mutation
             self.evolvePopulations()
-            self.sortPopulation()
 
-            cutChildPopulations = []     
-            for idx in range(0, self.getN()):
-                cutChildPopulations.append(self.getPopulation()[idx])
-            self.setPopulation(cutChildPopulations)
-
-            #currBestPop = self.getPopulation()[0]
-            #if currBestPop.getFitness() > allTimeBestPop.getFitness():
-            #   allTimeBestPop = currBestPop
+            # Sort population based on fitness val
+            self.sortPopulations()
             
-        bestBoardState = self.getPopulation()[0].getBoard()
-        listOfPawnCoord = []
-        for pawn in bestBoardState.listOfPawn:
-            listOfPawnCoord.append((pawn.row, pawn.column))
-        print(listOfPawnCoord)
-        """
-        For debugging purpose
-        for pop in self.getPopulation():
-            print((pop.getFitness(), pop.board.scoringListOfPawnWithColor()))
-        #self.getPopulation()[0].getBoard().printBoard()
-        #print(self.getPopulation()[0].getFitness())
-        """
-        allTimeBestPop = self.getPopulation()[0]
-        return allTimeBestPop.getBoard()
+            # Pick only N populations to evolve
+            self.trimPopulations()
+            #self.getPopulations()[0].board.printBoard()
+
+            currBestPop = self.getPopulations()[0]
+            
+            # output
+            print('== ', i+1, 'th gen')
+            print('  Current Best Fitness Value: ', currBestPop.getFitness())
+            self.checkAllTimeBestPopulation(currBestPop)
+
+        self.printAllTimeBestPopulation()
+            
+        return currBestPop.getBoard()
+    
+    def printAllTimeBestPopulation(self):
+        allTimeBest = self.allTimeBestPopulation
+        print('===========')
+        print('  ** All Time Best Population: ')
+        attackDiff, attackSame = allTimeBest.getBoard().calculatePawnAttack()
+        allTimeBest.board.printBoard()
+        print('  ', attackSame, attackDiff)
+        print('  Score: ', allTimeBest.getBoard().scoringListOfPawnWithColor())
+        #print('  Fitness Value: ', allTimeBest.getFitness())
+        print('===========')
+
