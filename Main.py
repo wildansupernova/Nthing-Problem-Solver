@@ -20,7 +20,7 @@ def makingInput(listOfPawn: List[PawnElement]):
                     newElementPawn = PawnElement(splitResult[1], splitResult[0])
                     listOfPawn.append(newElementPawn)
                     numberOfThisPawn -= 1
-        print("File opened successfully. ")
+        print("File has been opened successfully. ")
     except IOError:
         print("Could not read file : ", filename)
 
