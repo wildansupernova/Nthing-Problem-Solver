@@ -52,7 +52,6 @@ class GeneticAlgorithm:
 
     def setPopulation(self, population):
         self.populations = copy.deepcopy(population)
-        #self.populations = population
 
     def getPopulationsLength(self):
         return len(self.getPopulations())
@@ -161,7 +160,6 @@ class GeneticAlgorithm:
     # Mutate a population with the most constraining pawn with the same color
     def mutation(self, populationMember: PopulationMember) -> PopulationMember:
         mutatedPopulation = copy.deepcopy(populationMember)
-        mutatedBoard = copy.deepcopy(populationMember.getBoard())
         listOfPawn = mutatedPopulation.getBoard().getListOfPawn()
         
         idx = self.getMaxAttackingSameColorPawnIdx(populationMember, listOfPawn)
@@ -177,18 +175,10 @@ class GeneticAlgorithm:
         populations = self.getPopulations()
         parentA = populations[0]
         for i in range(0, self.getPopulationsLength()//2):
-        #for i in range(0, self.getN()):
-            #parentA = populations[random.randint(0, self.getPopulationsLength()-1)]
-            #parentB = populations[random.randint(0, self.getPopulationsLength()-1)]
-        #while (i < self.getPopulationsLength()-1):
-        
-            #idx = random.sample(range(len(populations[0].board.listOfPawn)), 2)
             parentA = populations[i]
             parentB = populations[i + self.getPopulationsLength()//2]
-            #parentB = populations[i]
-            # Crossover
-            #childA, childB = self.onePointCrossOver(parentA, parentB)
-            #parentB = populations[i]
+
+            #Crossover
             if random.random() < self.getProbCross():
                 childA, childB = self.onePointCrossOver(parentA, parentB)
             else:
@@ -212,19 +202,14 @@ class GeneticAlgorithm:
 
             # Sort population based on fitness val
             self.sortPopulations()
-            
+
             # Pick only N populations to evolve
             self.trimPopulations()
 
             currBestPop = self.getPopulations()[0]
-            
-            # output
-            #print('== ', i+1, 'th gen')
-            #print('  Current Best Fitness Value: ', currBestPop.getFitness())
             self.checkAllTimeBestPopulation(currBestPop)
 
         self.printAllTimeBestPopulation()
-            
         return currBestPop.getBoard()
     
     def printAllTimeBestPopulation(self):
@@ -235,6 +220,5 @@ class GeneticAlgorithm:
         allTimeBest.board.printBoard()
         print(' ', attackSame, attackDiff)
         print(' Score: ', allTimeBest.getBoard().scoringListOfPawnWithColor())
-        #print('  Fitness Value: ', allTimeBest.getFitness())
         print('===========')
 
