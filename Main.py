@@ -5,6 +5,7 @@ from HillClimbing import HillClimbing
 from SimulatedAnnealing import SimulatedAnnealing
 from GeneticAlgorithm import GeneticAlgorithm
 import copy
+import sys
 
 def makingInput(listOfPawn: List[PawnElement]):
     filename = input(">> Please input file name which contains your pawns: ")
@@ -23,6 +24,7 @@ def makingInput(listOfPawn: List[PawnElement]):
         print("File has been opened successfully. ")
     except IOError:
         print("Could not read file : ", filename)
+        sys.exit(1)
 
 def menu():
     print("Which algorithm do you prefer?")
