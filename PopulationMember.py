@@ -21,9 +21,4 @@ class PopulationMember:
 
     # Fitness function non-attacking-same-colour + attacking-different-colour pawns
     def fitnessFunction(self):
-        """
-        attackDiff, attackSame = self.getBoard().calculatePawnAttack()
-        nonAttackSame = self.getBoard().getLength() - attackSame
-        return nonAttackSame + attackDiff
-        """
         return self.board.scoringListOfPawnWithColor()

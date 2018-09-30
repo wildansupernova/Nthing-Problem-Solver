@@ -49,22 +49,17 @@ def menuSetting() -> int:
 
 def inputSettingSimulatedAnnealing() -> (int, int, int):
     x = int(input(">> Input Temperature : "))
-    y = int(input(">> Input Descent Rate : "))
+    y = float(input(">> Input Descent Rate : "))
     z = int(input(">> Input Delay Step : "))
     return x,y,z
 
 def inputSettingGeneticAlgorithm() -> (int,int,int,int):
     w = int(input(">> Input Number of Population Member : "))
-    x = int(input(">> Input Probability of Crossover : "))
-    y = int(input(">> Input Probability of Mutation : "))
+    x = float(input(">> Input Probability of Crossover : "))
+    y = float(input(">> Input Probability of Mutation : "))
     z = int(input(">> Input Number of Generations Generated : "))
     return w,x,y,z
     
-'''
-def printList(listOfPawn: List[PawnElement]):
-    for element in listOfPawn:
-        print(element.__dict__)
-'''
 def main():
     listOfPawn = []
     makingInput(listOfPawn)
@@ -83,7 +78,6 @@ def main():
         print(str(sameColor) + " " + str(differentColor))
         print(newBoard.scoringListOfPawnWithColor())
     elif (a == 2):
-        # print("\n")
         # print("Ini Simulated Annealing")
         choice = menuSetting()
         if (choice == 1):
@@ -99,14 +93,13 @@ def main():
         print(str(sameColor) + " " + str(differentColor))
         print(newBoard.scoringListOfPawnWithColor())
     else: # a == 3
-    # print("\n")
-    # print("Ini GA")
+        # print("Ini GA")
         choice = menuSetting()
         if (choice == 1):
             N,probCross,probMuta,generations = inputSettingGeneticAlgorithm()
         else: #choice == 2
             generations = 50
-            probCross = 0.7
+            probCross = 1
             probMuta = 0.3
             N = 50
         useGeneticAlgorithm = GeneticAlgorithm(board,N,probCross,probMuta,generations)

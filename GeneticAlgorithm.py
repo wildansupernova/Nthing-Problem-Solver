@@ -15,7 +15,6 @@ class GeneticAlgorithm:
         self.probMuta = probMuta
         self.numOfGeneration = numOfGeneration
         self.populations = self.initPopulation()
-        self.allTimeBestPopulation = copy.deepcopy(self.populations[0])
 
     def getProbCross(self):
         return self.probCross
@@ -56,12 +55,6 @@ class GeneticAlgorithm:
     def getPopulationsLength(self):
         return len(self.getPopulations())
 
-    def setAllTimeBestPopulation(self, population):
-        self.allTimeBestPopulation = copy.deepcopy(population)
-
-    def getAllTimeBestPopulation(self):
-        return self.allTimeBestPopulation
-
     ### TOOLS FOR GENETIC ALGORITHM EXECUTION ###
 
     # Randomize initial populations
@@ -72,11 +65,6 @@ class GeneticAlgorithm:
             randPop = PopulationMember(self.getInitBoard())
             randPopulations.append(randPop)
         return randPopulations
-    
-    # Check and set all time best population
-    def checkAllTimeBestPopulation(self, currBestPop: PopulationMember):
-        if currBestPop.getFitness() >= self.allTimeBestPopulation.getFitness():
-            self.setAllTimeBestPopulation(currBestPop)
     
     # Sort population based on fitness value
     def sortPopulations(self):
@@ -93,6 +81,7 @@ class GeneticAlgorithm:
     
     # Trim result of evolution populations into N pieces
     def trimPopulations(self):
+        self.reserveUniquePopulations()
         self.populations = self.populations[:self.getN()]
     
     # Return coordinates of pawn in a listOfPawn
@@ -101,6 +90,20 @@ class GeneticAlgorithm:
         for pawn in listOfPawn:
             listOfPawnCoord.append((pawn.row, pawn.column))
         return listOfPawnCoord
+    
+    # Reserve populations uniqueness
+    def reserveUniquePopulations(self):
+        populations = self.getPopulations()
+        prevListOfPawn = []
+        uniquePop = []
+        
+        for i in range(0, len(populations)):
+            checkListOfPawn = self.getListOfPawnCoord(populations[i].getBoard().getListOfPawn())
+            if checkListOfPawn != prevListOfPawn:
+                uniquePop.append(copy.deepcopy(populations[i]))
+                prevListOfPawn = checkListOfPawn
+                i -= 1
+        self.setPopulation(uniquePop)
     
     # Place pawn randomly on empty coordinates
     def placePawnRandomly(self, pawnCheck: PawnElement, listOfPawn: List[PawnElement]) -> PawnElement:
@@ -174,9 +177,9 @@ class GeneticAlgorithm:
         childPopulations = []
         populations = self.getPopulations()
         parentA = populations[0]
-        for i in range(0, self.getPopulationsLength()//2):
-            parentA = populations[i]
-            parentB = populations[i + self.getPopulationsLength()//2]
+        for i in range(1, self.getPopulationsLength()):
+            parentB = populations[i]
+            #parentB = populations[i + self.getPopulationsLength()//2]
 
             #Crossover
             if random.random() < self.getProbCross():
@@ -207,18 +210,6 @@ class GeneticAlgorithm:
             self.trimPopulations()
 
             currBestPop = self.getPopulations()[0]
-            self.checkAllTimeBestPopulation(currBestPop)
-
-        self.printAllTimeBestPopulation()
+            
+        print(str(i+1) + '-th generation')
         return currBestPop.getBoard()
-    
-    def printAllTimeBestPopulation(self):
-        allTimeBest = self.allTimeBestPopulation
-        print('===========')
-        print(' ** All Time Best Population: ')
-        attackDiff, attackSame = allTimeBest.getBoard().calculatePawnAttack()
-        allTimeBest.board.printBoard()
-        print(' ', attackSame, attackDiff)
-        print(' Score: ', allTimeBest.getBoard().scoringListOfPawnWithColor())
-        print('===========')
-
