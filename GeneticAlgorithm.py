@@ -1,10 +1,8 @@
-"""
-    UNDER CONSTRUCTION
-"""
 from PawnElement import PawnElement
 from PopulationMember import PopulationMember
 from typing import List
 from Board import Board
+import collections
 import copy
 import random
 
@@ -16,7 +14,7 @@ class GeneticAlgorithm:
         self.probCross = probCross
         self.probMuta = probMuta
         self.numOfGeneration = numOfGeneration
-        self.population = self.initPopulation()
+        self.populations = self.initPopulation()
 
     def getProbCross(self):
         return self.probCross
@@ -36,8 +34,8 @@ class GeneticAlgorithm:
     def setNumOfGeneration(self,numOfGeneration):
         self.numOfGeneration = numOfGeneration
 
-    def getPopulation(self):
-        return self.population
+    def getPopulations(self):
+        return self.populations
     
     def getN(self):
         return self.N
@@ -45,109 +43,151 @@ class GeneticAlgorithm:
     def setN(self, N):
         self.N = N
     
-    def getBoard(self):
+    def getInitBoard(self):
         return self.initBoard
     
-    def setBoard(self, board):
+    def setInitBoard(self, board):
         self.initBoard = board
 
     def setPopulation(self, population):
-        self.population = copy.deepcopy(population)
+        self.populations = copy.deepcopy(population)
 
-    def getPopulationLength(self):
-        return len(self.getPopulation())
-    # Make population
+    def getPopulationsLength(self):
+        return len(self.getPopulations())
+
+    ### TOOLS FOR GENETIC ALGORITHM EXECUTION ###
+
+    # Randomize initial populations
     def initPopulation(self) -> List[PopulationMember]: 
         randPopulations = []
         for i in range(0,self.getN()):
-            self.getBoard().initRandomState()
-            randPop = PopulationMember(self.getBoard())
+            self.getInitBoard().initRandomState()
+            randPop = PopulationMember(self.getInitBoard())
             randPopulations.append(randPop)
-            #self.printBoard(randPopulations[i].listOfPawn)
         return randPopulations
     
-    # Survival functin
-    def survivalFunction(self, populationMember: PopulationMember):
-        n = self.getPopulationLength()
-        totalFit = 0
-        for x in self.getPopulation():
-            totalFit += x.getFitness()
-        return populationMember.getFitness()/totalFit
-
-    # sort
-    def sortPopulation(self):
-        n = self.getPopulationLength()
-        sortedPopulation = self.getPopulation()
+    # Sort population based on fitness value
+    def sortPopulations(self):
+        n = self.getPopulationsLength()
+        sortedPopulation = self.getPopulations()
         for i in range(0,n-1):
             max = i
             for j in range(i+1,n):
-                #survivalFitnessI = self.survivalFunction(sortedPopulation[i], sortedPopulation)
-                #survivalFitnessJ = self.survivalFunction(sortedPopulation[j], sortedPopulation)
-                #if (survivalFitnessJ > survivalFitnessI):
                 if (sortedPopulation[j].getFitness() > sortedPopulation[max].getFitness()):
                     max = j
             temp = sortedPopulation[i]
             sortedPopulation[i] = sortedPopulation[max]
             sortedPopulation[max] = temp
     
+    # Trim result of evolution populations into N pieces
+    def trimPopulations(self):
+        self.reserveUniquePopulations()
+        self.populations = self.populations[:self.getN()]
+    
+    # Return coordinates of pawn in a listOfPawn
+    def getListOfPawnCoord(self, listOfPawn: List[PawnElement]):
+        listOfPawnCoord = []
+        for pawn in listOfPawn:
+            listOfPawnCoord.append((pawn.row, pawn.column))
+        return listOfPawnCoord
+    
+    # Reserve populations uniqueness
+    def reserveUniquePopulations(self):
+        populations = self.getPopulations()
+        prevListOfPawn = []
+        uniquePop = []
+        
+        for i in range(0, len(populations)):
+            checkListOfPawn = self.getListOfPawnCoord(populations[i].getBoard().getListOfPawn())
+            if checkListOfPawn != prevListOfPawn:
+                uniquePop.append(copy.deepcopy(populations[i]))
+                prevListOfPawn = checkListOfPawn
+                i -= 1
+        self.setPopulation(uniquePop)
+    
+    # Place pawn randomly on empty coordinates
+    def placePawnRandomly(self, pawnCheck: PawnElement, listOfPawn: List[PawnElement]) -> PawnElement:
+        replacedPawn = copy.deepcopy(pawnCheck)
+        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
+
+        while True:
+            replacedPawn.randomizeRowColumn()
+            randRow, randCol = replacedPawn.row, replacedPawn.column
+            if (randRow, randCol) not in listOfPawnCoord:
+                break
+        return replacedPawn
+
+    # Crossover effect: Check is pawn coordinate is empty in listOfPawn
+    def isPawnSaveToPlace(self, pawn: PawnElement, listOfPawn: List[PawnElement]):
+        listOfPawnCoord = self.getListOfPawnCoord(listOfPawn)
+        return (pawn.row, pawn.column) not in listOfPawnCoord
+
     # One point crossover
     def onePointCrossOver(self, parentA: PopulationMember, parentB: PopulationMember):
-        childA = []
-        childB = []
+        childA, childB = [], []
         parentAPawn = parentA.getBoard().getListOfPawn()
         parentBPawn = parentB.getBoard().getListOfPawn()
-        crossPoint = random.randint(1, len(parentAPawn)-1)
+        crossPoint = random.randint(1, len(parentAPawn)-2)
 
         for i in range(0, crossPoint):
             childA.append(parentAPawn[i])
             childB.append(parentBPawn[i])
+        
         for i in range(crossPoint, len(parentAPawn)):
-            childA.append(parentBPawn[i])
-            childB.append(parentAPawn[i])
+            if self.isPawnSaveToPlace(parentBPawn[i], childA):
+                childAPawn = parentBPawn[i]
+            else:
+                childAPawn = self.placePawnRandomly(parentBPawn[i], childA)
+            if self.isPawnSaveToPlace(parentAPawn[i], childB):
+                childBPawn = parentAPawn[i]
+            else:
+                childBPawn = self.placePawnRandomly(parentAPawn[i], childB)
+            childA.append(childAPawn)
+            childB.append(childBPawn)
+
         boardA = Board(childA)
         boardB = Board(childB)
         return PopulationMember(boardA), PopulationMember(boardB)
 
-    # Mutation of a population
-    def mutation(self, populationMember: PopulationMember):
-        maxColAttack = 0
-        idxMax = 0
-        listOfPawn = populationMember.getBoard().getListOfPawn()
-        # search the max attacking pawn w/ the same color
+    # Mutation: get pawn index which attacking the same color the most
+    def getMaxAttackingSameColorPawnIdx(self, population: PopulationMember, listOfPawn: List[PawnElement]) -> int:
+        maxAttack = 0
+        idx = 0
         for i in range(0, len(listOfPawn)):
-            _, sameColAttack = populationMember.getBoard().countPawnElementAttack(i)
-            if maxColAttack < sameColAttack:
-                idxMax = i
-                maxColAttack = sameColAttack
-        # Mutation in element idxMax: switch pawn
-        mutatedPopulationMember = populationMember
-        mutatedList = mutatedPopulationMember.getBoard().getListOfPawn()
-        rowMax =mutatedList[idxMax].row
-        colMax =mutatedList[idxMax].column
-        idxSwitch = populationMember.getBoard().findElementWithCoordinate(rowMax, colMax)
-        
-        rowTemp =mutatedList[idxMax].row
-        colTemp =mutatedList[idxMax].column
-        mutatedList[idxMax].row =mutatedList[idxSwitch].row
-        mutatedList[idxMax].column =mutatedList[idxSwitch].column
-        mutatedList[idxSwitch].row = rowMax
-        mutatedList[idxSwitch].row = colMax
-        return mutatedPopulationMember
+            _, sameColorAttack = population.getBoard().countPawnElementAttack(i)
+            if maxAttack < sameColorAttack:
+                idx = i
+                maxAttack = sameColorAttack
+        return idx
 
-    # Generate child populations
+    # Mutate a population with the most constraining pawn with the same color
+    def mutation(self, populationMember: PopulationMember) -> PopulationMember:
+        mutatedPopulation = copy.deepcopy(populationMember)
+        listOfPawn = mutatedPopulation.getBoard().getListOfPawn()
+        
+        idx = self.getMaxAttackingSameColorPawnIdx(populationMember, listOfPawn)
+
+        mutatedPawn = self.placePawnRandomly(listOfPawn[idx], listOfPawn)    
+        mutatedPopulation.getBoard().getListOfPawn()[idx].setPawnCoordinate(mutatedPawn)
+
+        return mutatedPopulation
+
+    # Generate N child populations. Evolve with CROSSOVER and MUTATION.
     def evolvePopulations(self):
         childPopulations = []
-        populations = self.getPopulation()
+        populations = self.getPopulations()
         parentA = populations[0]
-        for i in range(1, self.getPopulationLength()):
+        for i in range(1, self.getPopulationsLength()):
             parentB = populations[i]
-            # Cross Over
+            #parentB = populations[i + self.getPopulationsLength()//2]
+
+            #Crossover
             if random.random() < self.getProbCross():
                 childA, childB = self.onePointCrossOver(parentA, parentB)
             else:
                 childA, childB = parentA, parentB
-            # Mutation
             
+            # Mutation
             if random.random() < self.getProbMuta():
                 childA = self.mutation(childA)
                 childB = self.mutation(childB)
@@ -155,24 +195,21 @@ class GeneticAlgorithm:
             childPopulations += [childA, childB]
         self.setPopulation(childPopulations)
 
-
-
+    ## MAIN ALGORITHM ##
     def algorithm(self):
-        populations = self.getPopulation()
+        self.sortPopulations()
 
-        self.sortPopulation()
-
-        count = 0
-        while True:
+        for i in range(0, self.numOfGeneration):
+            # Crossover and Mutation
             self.evolvePopulations()
-            self.sortPopulation()
-            cutChildPopulations = []
-            for i in range(0,self.getN()):
-                cutChildPopulations.append(populations[i])
+
+            # Sort population based on fitness val
+            self.sortPopulations()
+
+            # Pick only N populations to evolve
+            self.trimPopulations()
+
+            currBestPop = self.getPopulations()[0]
             
-            self.setPopulation(cutChildPopulations)
-            count += 1
-            if count == self.getNumOfGeneration() or self.getPopulationLength() <= 2:
-                break
-        lastListOfPawn = populations[0].getBoard()
-        return lastListOfPawn
+        print(str(i+1) + '-th generation')
+        return currBestPop.getBoard()

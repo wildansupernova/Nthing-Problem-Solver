@@ -42,7 +42,6 @@ class SimulatedAnnealing:
     
     # Simulated Annealing Algorithm
     def algorithm(self) -> Board:
-        stateListPawn = self.getBoard().getListOfPawn()
         totalNeighbor = self.getBoard().countNeighbor()
         
         step = 0
